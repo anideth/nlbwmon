@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <time.h>
 #include <unistd.h>
 #include "flow_tcp.h"
