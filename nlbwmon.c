@@ -35,6 +35,7 @@
 #include <stdbool.h>
 #include <inttypes.h>
 #include <signal.h>
+#include <time.h>
 #include <unistd.h>
 #include <string.h>
 #include <libgen.h>
@@ -69,6 +70,8 @@ static struct uloop_timer_type commit_tm = { };
 static struct uloop_timer_type refresh_tm = { };
 static struct uloop_timeout flow_tcp_tm = { };
 static struct flow_tcp *flow_transport;
+static uint64_t flow_tcp_last_dropped;
+static time_t flow_tcp_last_warning;
 
 static void flow_completed(const struct flow_record *record, void *ctx)
 {
@@ -80,7 +83,19 @@ static void flow_completed(const struct flow_record *record, void *ctx)
 
 static void flow_tcp_tick(struct uloop_timeout *tm)
 {
+	uint64_t dropped;
+	time_t now;
+
 	flow_tcp_step(flow_transport);
+	dropped = flow_tcp_dropped(flow_transport);
+	now = time(NULL);
+	if (dropped != flow_tcp_last_dropped &&
+	    (flow_tcp_last_warning == 0 || now - flow_tcp_last_warning >= 60)) {
+		fprintf(stderr, "Flow TCP queue: dropped=%" PRIu64 ", queued=%zu\\n",
+		        dropped, flow_tcp_queued(flow_transport));
+		flow_tcp_last_dropped = dropped;
+		flow_tcp_last_warning = now;
+	}
 	uloop_timeout_set(tm, 100);
 }
 
