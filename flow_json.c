@@ -36,7 +36,7 @@ int flow_json_format_event(const struct flow_record *record, const char *event_t
         return -EINVAL;
 
     n = snprintf(buffer, size,
-        "{\"schema\":\"nlbwmon-flow-v1\",\"id\":%" PRIu32 ",\"mark\":%" PRIu32
+        "{\"schema\":\"nlbwmon-flow-v1\",\"event_type\":\"%s\",\"connection_id\":\"%s-%" PRIu32 "-%" PRIdMAX "-%ld\",\"id\":%" PRIu32 ",\"mark\":%" PRIu32
         ",\"family\":%u,\"protocol\":%u,\"orig_src\":\"%s\",\"orig_dst\":\"%s\""
         ",\"orig_sport\":%u,\"orig_dport\":%u,\"reply_src\":\"%s\",\"reply_dst\":\"%s\""
         ",\"reply_sport\":%u,\"reply_dport\":%u,\"orig_packets\":%" PRIu64
