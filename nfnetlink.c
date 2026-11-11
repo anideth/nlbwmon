@@ -237,9 +237,9 @@ track_flow(struct nlattr **attr, bool from_dump, unsigned int msg_type,
 	flow_process(event, &flow);
 }
 
-static void
-parse_event(void *reply, int len, bool allow_insert, bool update_mac,
-            bool from_dump)
+void
+nfnetlink_parse_event(void *reply, int len, bool allow_insert, bool update_mac,
+                      bool from_dump)
 {
 	int err;
 	struct nlmsghdr *hdr;
@@ -388,7 +388,7 @@ handle_event(struct uloop_fd *fd, unsigned int ev)
 
 		hdr = (struct nlmsghdr *)msg;
 		is_new = (NFNL_MSG_TYPE(hdr->nlmsg_type) == IPCTNL_MSG_CT_NEW);
-		parse_event(msg, len, is_new, is_new, false);
+		nfnetlink_parse_event(msg, len, is_new, is_new, false);
 		free(msg);
 	}
 }
@@ -398,7 +398,7 @@ handle_dump(struct nl_msg *msg, void *arg)
 {
 	struct nlmsghdr *hdr = nlmsg_hdr(msg);
 	bool *allow_insert = arg;
-	parse_event(hdr, hdr->nlmsg_len, *allow_insert, true, true);
+	nfnetlink_parse_event(hdr, hdr->nlmsg_len, *allow_insert, true, true);
 	return NL_SKIP;
 }
 
