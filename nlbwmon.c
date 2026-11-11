@@ -73,12 +73,24 @@ static struct flow_tcp *flow_transport;
 static uint64_t flow_tcp_last_dropped;
 static time_t flow_tcp_last_warning;
 
-static void flow_completed(const struct flow_record *record, void *ctx)
+static char flow_boot_id[40] = "unknown";
+
+static void flow_emit(const struct flow_record *record, const char *event_type, void *ctx)
 {
-	char line[1024];
-	int length = flow_json_format(record, line, sizeof(line));
+	char line[2048];
+	int length = flow_json_format_event(record, event_type, flow_boot_id, line, sizeof(line));
 	if (length > 0)
 		flow_tcp_enqueue(ctx, line, (size_t)length);
+}
+
+static void flow_started(const struct flow_record *record, void *ctx)
+{
+	flow_emit(record, "NEW", ctx);
+}
+
+static void flow_completed(const struct flow_record *record, void *ctx)
+{
+	flow_emit(record, "DESTROY", ctx);
 }
 
 static void flow_tcp_tick(struct uloop_timeout *tm)
@@ -407,6 +419,13 @@ server_main(int argc, char **argv)
 			fprintf(stderr, "Unable to configure flow TCP transport\n");
 			return 1;
 		}
+		FILE *boot = fopen("/proc/sys/kernel/random/boot_id", "r");
+		if (boot) {
+			if (fgets(flow_boot_id, sizeof(flow_boot_id), boot))
+				flow_boot_id[strcspn(flow_boot_id, "\\n")] = '\\0';
+			fclose(boot);
+		}
+		flow_set_start_callback(flow_started, flow_transport);
 		flow_set_complete_callback(flow_completed, flow_transport);
 	}
 
@@ -484,6 +503,7 @@ server_main(int argc, char **argv)
 	}
 
 	uloop_run();
+	flow_set_start_callback(NULL, NULL);
 	flow_set_complete_callback(NULL, NULL);
 	flow_tcp_destroy(flow_transport);
 	flow_transport = NULL;
