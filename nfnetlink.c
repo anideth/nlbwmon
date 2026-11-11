@@ -136,7 +136,8 @@ parse_addrs(struct nlattr **tuple, uint8_t *family, void *saddr, void *daddr)
 {
 	struct nlattr *addrs[CTA_IP_MAX + 1];
 
-	if (nla_parse_nested(addrs, CTA_IP_MAX, tuple[CTA_TUPLE_IP], ct_ip_policy))
+	if (!tuple[CTA_TUPLE_IP] ||
+	    nla_parse_nested(addrs, CTA_IP_MAX, tuple[CTA_TUPLE_IP], ct_ip_policy))
 		return false;
 
 	if (addrs[CTA_IP_V4_SRC] && addrs[CTA_IP_V4_DST]) {
@@ -163,7 +164,8 @@ parse_proto_port(struct nlattr **tuple, bool src, uint8_t *proto, uint16_t *port
 	*proto = 0;
 	*port = 0;
 
-	if (nla_parse_nested(tb, CTA_PROTO_MAX, tuple[CTA_TUPLE_PROTO], ct_proto_policy))
+	if (!tuple[CTA_TUPLE_PROTO] ||
+	    nla_parse_nested(tb, CTA_PROTO_MAX, tuple[CTA_TUPLE_PROTO], ct_proto_policy))
 		return false;
 
 	if (tb[CTA_PROTO_NUM]) {
