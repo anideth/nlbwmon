@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 include(CheckFunctionExists)
 
 project(nlbwmon C)
@@ -8,6 +8,7 @@ option(LIBNL_LIBRARY_TINY "Use LEDE/OpenWrt libnl-tiny" OFF)
 
 set(SOURCES
 	client.c database.c neigh.c nfnetlink.c
+	flow_export.c
 	nlbwmon.c protocol.c socket.c subnets.c
 	timing.c utils.c)
 
