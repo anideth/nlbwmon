@@ -16,7 +16,43 @@
 #include <string.h>
 #include "../nfnetlink.h"
 #include "../subnets.h"
+#include "../neigh.h"
+#include "../protocol.h"
 #include "../flow_export.h"
+
+/* Stubs for legacy accounting; flow parsing/tracking remain production code. */
+struct dbhandle *gdbh;
+struct options opt;
+
+int database_insert(struct dbhandle *h, struct record *rec)
+{
+    (void)h; (void)rec;
+    return 0;
+}
+
+int database_update(struct dbhandle *h, struct record *rec)
+{
+    (void)h; (void)rec;
+    return 0;
+}
+
+int update_macaddr(int family, const void *addr)
+{
+    (void)family; (void)addr;
+    return 0;
+}
+
+int lookup_macaddr(int family, const void *addr, struct ether_addr *mac)
+{
+    (void)family; (void)addr; (void)mac;
+    return 0;
+}
+
+struct protocol *lookup_protocol(uint8_t proto, uint16_t port)
+{
+    (void)proto; (void)port;
+    return NULL;
+}
 
 /* No test traffic is in the legacy nlbwmon accounting subnets. */
 int match_subnet(int family, struct in6_addr *addr)
