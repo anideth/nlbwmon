@@ -2,6 +2,7 @@
 #define FLOW_EXPORT_H
 
 #include <stdint.h>
+#include <stddef.h>
 #include <stdbool.h>
 #include <time.h>
 #include <netinet/in.h>
@@ -42,6 +43,7 @@ enum flow_event_type {
 typedef void (*flow_complete_cb)(const struct flow_record *record, void *ctx);
 
 void flow_set_complete_callback(flow_complete_cb callback, void *ctx);
+size_t flow_active_count(void);
 int flow_init(void);
 void flow_cleanup(void);
 
