@@ -39,6 +39,9 @@ enum flow_event_type {
     FLOW_DESTROY
 };
 
+typedef void (*flow_complete_cb)(const struct flow_record *record, void *ctx);
+
+void flow_set_complete_callback(flow_complete_cb callback, void *ctx);
 int flow_init(void);
 void flow_cleanup(void);
 
