@@ -178,6 +178,63 @@ parse_proto_port(struct nlattr **tuple, bool src, uint8_t *proto, uint16_t *port
 	return false;
 }
 
+/*
+ * The counter-zero dump contains deltas; NEW is only a lifecycle marker.
+ * DESTROY carries the final residual counters. Keep this accounting separate
+ * from the existing nlbwmon database path.
+ */
+static void
+track_flow(struct nlattr **attr, bool from_dump, unsigned int msg_type,
+           uint8_t family, uint8_t orig_proto, uint8_t reply_proto,
+           const struct in6_addr *orig_src, const struct in6_addr *orig_dst,
+           const struct in6_addr *reply_src, const struct in6_addr *reply_dst,
+           uint16_t orig_sport, uint16_t orig_dport,
+           uint16_t reply_sport, uint16_t reply_dport,
+           uint64_t orig_pkts, uint64_t orig_bytes,
+           uint64_t reply_pkts, uint64_t reply_bytes)
+{
+	struct flow_record flow = { };
+	enum flow_event_type event;
+
+	if (!attr[CTA_ID] || !attr[CTA_MARK] ||
+	    nla_len(attr[CTA_ID]) != sizeof(uint32_t) ||
+	    nla_len(attr[CTA_MARK]) != sizeof(uint32_t))
+		return;
+
+	if (from_dump)
+		event = FLOW_UPDATE;
+	else if (msg_type == IPCTNL_MSG_CT_NEW)
+		event = FLOW_NEW;
+	else if (msg_type == IPCTNL_MSG_CT_DELETE)
+		event = FLOW_DESTROY;
+	else
+		return;
+
+	/* Conntrack CTA_ID and CTA_MARK are network-byte-order attributes. */
+	flow.id = ntohl(nla_get_u32(attr[CTA_ID]));
+	flow.mark = ntohl(nla_get_u32(attr[CTA_MARK]));
+	flow.original.family = family;
+	flow.original.protocol = orig_proto;
+	flow.original.src = *orig_src;
+	flow.original.dst = *orig_dst;
+	flow.original.sport = orig_sport;
+	flow.original.dport = orig_dport;
+	flow.reply.family = family;
+	flow.reply.protocol = reply_proto;
+	flow.reply.src = *reply_src;
+	flow.reply.dst = *reply_dst;
+	flow.reply.sport = reply_sport;
+	flow.reply.dport = reply_dport;
+
+	/* Kernel conntrack counters are encoded in network byte order. */
+	flow.orig_packets = be64toh(orig_pkts);
+	flow.orig_bytes = be64toh(orig_bytes);
+	flow.reply_packets = be64toh(reply_pkts);
+	flow.reply_bytes = be64toh(reply_bytes);
+
+	flow_process(event, &flow);
+}
+
 static void
 parse_event(void *reply, int len, bool allow_insert, bool update_mac,
             bool from_dump)
@@ -193,7 +250,8 @@ parse_event(void *reply, int len, bool allow_insert, bool update_mac,
 	struct in6_addr orig_saddr, orig_daddr, reply_saddr, reply_daddr;
 
 	uint64_t orig_pkts, orig_bytes, reply_pkts, reply_bytes;
-	uint16_t orig_port, reply_port;
+	uint16_t orig_port, reply_port, orig_sport, reply_dport;
+	uint8_t ignored_proto;
 	uint8_t orig_proto, reply_proto;
 
 	for (hdr = reply; nlmsg_ok(hdr, len); hdr = nlmsg_next(hdr, &len)) {
@@ -228,6 +286,19 @@ parse_event(void *reply, int len, bool allow_insert, bool update_mac,
 		    !parse_proto_port(tuple, true, &reply_proto, &reply_port))
 			continue;
 
+		/* Retrieve the two ports not needed by the legacy database. */
+		if (!nla_parse_nested(tuple, CTA_TUPLE_MAX,
+		                      attr[CTA_TUPLE_ORIG], ct_tuple_policy))
+			parse_proto_port(tuple, true, &ignored_proto, &orig_sport);
+		else
+			orig_sport = 0;
+
+		if (!nla_parse_nested(tuple, CTA_TUPLE_MAX,
+		                      attr[CTA_TUPLE_REPLY], ct_tuple_policy))
+			parse_proto_port(tuple, false, &ignored_proto, &reply_dport);
+		else
+			reply_dport = 0;
+
 		if (attr[CTA_COUNTERS_ORIG] &&
 		    !nla_parse_nested(counters, CTA_COUNTERS_MAX, attr[CTA_COUNTERS_ORIG], ct_counters_policy)) {
 			orig_pkts = nla_get_u64(counters[CTA_COUNTERS_PACKETS]);
@@ -239,6 +310,12 @@ parse_event(void *reply, int len, bool allow_insert, bool update_mac,
 			reply_pkts = nla_get_u64(counters[CTA_COUNTERS_PACKETS]);
 			reply_bytes = nla_get_u64(counters[CTA_COUNTERS_BYTES]);
 		}
+
+		track_flow(attr, from_dump, NFNL_MSG_TYPE(hdr->nlmsg_type),
+		           r.family, orig_proto, reply_proto,
+		           &orig_saddr, &orig_daddr, &reply_saddr, &reply_daddr,
+		           orig_sport, orig_port, reply_port, reply_dport,
+		           orig_pkts, orig_bytes, reply_pkts, reply_bytes);
 
 		/* local -> remote */
 		if (!match_subnet(r.family, &orig_saddr) && match_subnet(r.family, &orig_daddr)) {
