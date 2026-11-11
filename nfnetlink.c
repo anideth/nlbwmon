@@ -32,6 +32,7 @@
 #include "protocol.h"
 #include "subnets.h"
 #include "neigh.h"
+#include "flow_export.h"
 
 
 static uint32_t n_pending_inserts = 0;
@@ -178,7 +179,8 @@ parse_proto_port(struct nlattr **tuple, bool src, uint8_t *proto, uint16_t *port
 }
 
 static void
-parse_event(void *reply, int len, bool allow_insert, bool update_mac)
+parse_event(void *reply, int len, bool allow_insert, bool update_mac,
+            bool from_dump)
 {
 	int err;
 	struct nlmsghdr *hdr;
@@ -303,7 +305,7 @@ handle_event(struct uloop_fd *fd, unsigned int ev)
 
 		hdr = (struct nlmsghdr *)msg;
 		is_new = (NFNL_MSG_TYPE(hdr->nlmsg_type) == IPCTNL_MSG_CT_NEW);
-		parse_event(msg, len, is_new, is_new);
+		parse_event(msg, len, is_new, is_new, false);
 		free(msg);
 	}
 }
@@ -313,7 +315,7 @@ handle_dump(struct nl_msg *msg, void *arg)
 {
 	struct nlmsghdr *hdr = nlmsg_hdr(msg);
 	bool *allow_insert = arg;
-	parse_event(hdr, hdr->nlmsg_len, *allow_insert, true);
+	parse_event(hdr, hdr->nlmsg_len, *allow_insert, true, true);
 	return NL_SKIP;
 }
 
