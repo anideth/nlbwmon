@@ -1,5 +1,15 @@
 # nlbwmon — experimental conntrack flow export fork
 
+> [!CAUTION]
+> **EXPERIMENTAL DEVELOPMENT FORK — NOT PRODUCTION READY.**
+>
+> This branch contains unfinished, unverified changes to conntrack accounting and flow export. It may lose, duplicate, misattribute, or incorrectly count traffic and connection events. **Do not use it for security auditing, billing, compliance, or any other purpose requiring accurate or complete records.**
+>
+> The NEW/DESTROY lifecycle exporter is under active development. Paired events are best-effort, not guaranteed: kernel event loss, daemon restarts, queue overflow, TCP disconnections, and receiver failures can result in missing or duplicate records. The changes have not yet passed full build, integration, and long-running production tests.
+>
+> **Use only in an isolated test environment unless you understand the risks.** Back up your OpenWrt configuration and accounting database, retain the original package and a tested rollback procedure. This is an unofficial fork, not an endorsed upstream or OpenWrt release.
+
+
 > **Unofficial fork of [jow-/nlbwmon](https://github.com/jow-/nlbwmon).** The original bandwidth accounting functionality remains the foundation of this project. The flow exporter is experimental, **disabled by default**, and has not yet been validated on a live OpenWrt router. This is not an official OpenWrt package.
 
 This branch adds optional, per-connection flow records to nlbwmon's existing Linux conntrack accounting. It uses the daemon's existing netlink processing instead of running a second zero-on-read conntrack poller. Completed flows can be formatted as newline-delimited JSON (JSONL) and sent to a configured TCP collector.
