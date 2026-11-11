@@ -8,7 +8,7 @@ option(LIBNL_LIBRARY_TINY "Use LEDE/OpenWrt libnl-tiny" OFF)
 
 set(SOURCES
 	client.c database.c neigh.c nfnetlink.c
-	flow_export.c
+	flow_export.c flow_json.c flow_tcp.c
 	nlbwmon.c protocol.c socket.c subnets.c
 	timing.c utils.c)
 
