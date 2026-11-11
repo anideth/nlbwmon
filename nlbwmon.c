@@ -47,6 +47,7 @@
 #include "database.h"
 #include "protocol.h"
 #include "nfnetlink.h"
+#include "flow_export.h"
 #include "subnets.h"
 #include "socket.h"
 #include "client.h"
@@ -214,8 +215,9 @@ server_main(int argc, char **argv)
 	uint32_t timestamp;
 	int optchr, err;
 	char *e;
+	struct flow_config flow_cfg = { .enabled = false, .mark = 0x40000000U, .mark_mask = 0x40000000U, .max_flows = 16384 };
 
-	while ((optchr = getopt(argc, argv, "b:i:r:s:o:p:G:I:L:PZ")) > -1) {
+	while ((optchr = getopt(argc, argv, "b:i:r:s:o:p:G:I:L:PZE:M:K:F:")) > -1) {
 		switch (optchr) {
 		case 'b':
 			opt.netlink_buffer_size = (int)strtol(optarg, &e, 0);
@@ -290,6 +292,42 @@ server_main(int argc, char **argv)
 			}
 			break;
 
+		case 'E':
+			if (strcmp(optarg, "0") && strcmp(optarg, "1")) {
+				fprintf(stderr, "Invalid flow enabled flag '%s'\n", optarg);
+				return 1;
+			}
+			flow_cfg.enabled = (*optarg == '1');
+			break;
+
+		case 'M':
+		case 'K': {
+			unsigned long value;
+			errno = 0;
+			value = strtoul(optarg, &e, 0);
+			if (errno || e == optarg || *e || value > UINT32_MAX) {
+				fprintf(stderr, "Invalid flow mark/mask '%s'\n", optarg);
+				return 1;
+			}
+			if (optchr == 'M')
+				flow_cfg.mark = (uint32_t)value;
+			else
+				flow_cfg.mark_mask = (uint32_t)value;
+			break;
+		}
+
+		case 'F': {
+			unsigned long value;
+			errno = 0;
+			value = strtoul(optarg, &e, 10);
+			if (errno || e == optarg || *e || !value || value > 1048576) {
+				fprintf(stderr, "Invalid max flows '%s'\n", optarg);
+				return 1;
+			}
+			flow_cfg.max_flows = (size_t)value;
+			break;
+		}
+
 		case 'Z':
 			opt.db.compress = true;
 			break;
@@ -299,6 +337,12 @@ server_main(int argc, char **argv)
 	if (!opt.archive_interval.type) {
 		fprintf(stderr, "No interval specified; assuming 1st of month\n");
 		interval_pton("1", &opt.archive_interval);
+	}
+
+	err = flow_configure(&flow_cfg);
+	if (err) {
+		fprintf(stderr, "Invalid flow configuration: %s\n", strerror(-err));
+		return 1;
 	}
 
 	uloop_init();
