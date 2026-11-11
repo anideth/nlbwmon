@@ -34,8 +34,16 @@ size_t flow_active_count(void)
 {
     return active_count;
 }
+static flow_start_cb start_callback;
+static void *start_context;
 static flow_complete_cb complete_callback;
 static void *complete_context;
+
+void flow_set_start_callback(flow_start_cb callback, void *ctx)
+{
+    start_callback = callback;
+    start_context = ctx;
+}
 
 void flow_set_complete_callback(flow_complete_cb callback, void *ctx)
 {
@@ -149,6 +157,9 @@ int flow_process(enum flow_event_type event,
 
         *slot = entry;
         active_count++;
+        /* NEW is emitted immediately, exactly once for a newly tracked flow. */
+        if (event == FLOW_NEW && start_callback)
+            start_callback(&entry->record, start_context);
     }
 
     stored = &entry->record;
