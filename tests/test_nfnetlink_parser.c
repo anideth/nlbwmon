@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "../nfnetlink.h"
+#include "../subnets.h"
 #include "../flow_export.h"
 
 /* No test traffic is in the legacy nlbwmon accounting subnets. */
