@@ -54,6 +54,14 @@ int main(void)
     assert(flow_json_format(&r, json, sizeof(json)) > 0);
     assert(strstr(json, "\"orig_src\":\"2001:db8::1\""));
 
+    n = flow_json_format_event(&r, "NEW", "test-boot", json, sizeof(json));
+    assert(n > 0);
+    assert(strstr(json, "\\\"event_type\\\":\\\"NEW\\\""));
+    assert(strstr(json, "\\\"connection_id\\\":\\\"test-boot-42-100-0\\\""));
+    n = flow_json_format_event(&r, "DESTROY", "test-boot", json, sizeof(json));
+    assert(n > 0);
+    assert(strstr(json, "\\\"event_type\\\":\\\"DESTROY\\\""));
+    assert(strstr(json, "\\\"connection_id\\\":\\\"test-boot-42-100-0\\\""));
     puts("flow JSON tests: PASS");
     return 0;
 }
