@@ -42,8 +42,8 @@ int flow_json_format(const struct flow_record *record, char *buffer, size_t size
         ",\"finished_sec\":%" PRIdMAX ",\"seen_new\":%s}\n",
         record->id, record->mark, (unsigned)record->original.family,
         (unsigned)record->original.protocol, os, od,
-        (unsigned)record->original.sport, (unsigned)record->original.dport,
-        rs, rd, (unsigned)record->reply.sport, (unsigned)record->reply.dport,
+        (unsigned)ntohs(record->original.sport), (unsigned)ntohs(record->original.dport),
+        rs, rd, (unsigned)ntohs(record->reply.sport), (unsigned)ntohs(record->reply.dport),
         record->orig_packets, record->orig_bytes, record->reply_packets,
         record->reply_bytes, (intmax_t)record->started.tv_sec,
         (intmax_t)record->finished.tv_sec, record->seen_new ? "true" : "false");
