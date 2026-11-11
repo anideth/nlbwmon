@@ -301,14 +301,18 @@ parse_event(void *reply, int len, bool allow_insert, bool update_mac,
 
 		if (attr[CTA_COUNTERS_ORIG] &&
 		    !nla_parse_nested(counters, CTA_COUNTERS_MAX, attr[CTA_COUNTERS_ORIG], ct_counters_policy)) {
-			orig_pkts = nla_get_u64(counters[CTA_COUNTERS_PACKETS]);
-			orig_bytes = nla_get_u64(counters[CTA_COUNTERS_BYTES]);
+			if (counters[CTA_COUNTERS_PACKETS])
+				orig_pkts = nla_get_u64(counters[CTA_COUNTERS_PACKETS]);
+			if (counters[CTA_COUNTERS_BYTES])
+				orig_bytes = nla_get_u64(counters[CTA_COUNTERS_BYTES]);
 		}
 
 		if (attr[CTA_COUNTERS_REPLY] &&
 		    !nla_parse_nested(counters, CTA_COUNTERS_MAX, attr[CTA_COUNTERS_REPLY], ct_counters_policy)) {
-			reply_pkts = nla_get_u64(counters[CTA_COUNTERS_PACKETS]);
-			reply_bytes = nla_get_u64(counters[CTA_COUNTERS_BYTES]);
+			if (counters[CTA_COUNTERS_PACKETS])
+				reply_pkts = nla_get_u64(counters[CTA_COUNTERS_PACKETS]);
+			if (counters[CTA_COUNTERS_BYTES])
+				reply_bytes = nla_get_u64(counters[CTA_COUNTERS_BYTES]);
 		}
 
 		track_flow(attr, from_dump, NFNL_MSG_TYPE(hdr->nlmsg_type),
