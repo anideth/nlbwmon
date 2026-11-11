@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
+#include <string.h>
 #include "flow_json.h"
 
 static int format_address(const struct flow_tuple *tuple, const struct in6_addr *addr,
@@ -17,13 +18,15 @@ static int format_address(const struct flow_tuple *tuple, const struct in6_addr 
     return inet_ntop(tuple->family, src, output, size) ? 0 : -EINVAL;
 }
 
-int flow_json_format(const struct flow_record *record, char *buffer, size_t size)
+int flow_json_format_event(const struct flow_record *record, const char *event_type,
+                           const char *boot_id, char *buffer, size_t size)
 {
     char os[INET6_ADDRSTRLEN], od[INET6_ADDRSTRLEN];
     char rs[INET6_ADDRSTRLEN], rd[INET6_ADDRSTRLEN];
     int n;
 
-    if (!record || !buffer || !size)
+    if (!record || !buffer || !size || !event_type || !boot_id ||
+        (strcmp(event_type, "NEW") && strcmp(event_type, "DESTROY")))
         return -EINVAL;
 
     if (format_address(&record->original, &record->original.src, os, sizeof(os)) ||
@@ -40,7 +43,8 @@ int flow_json_format(const struct flow_record *record, char *buffer, size_t size
         ",\"orig_bytes\":%" PRIu64 ",\"reply_packets\":%" PRIu64
         ",\"reply_bytes\":%" PRIu64 ",\"started_sec\":%" PRIdMAX
         ",\"finished_sec\":%" PRIdMAX ",\"seen_new\":%s}\n",
-        record->id, record->mark, (unsigned)record->original.family,
+        event_type, boot_id, record->id, (intmax_t)record->started.tv_sec,
+        record->started.tv_nsec, record->id, record->mark, (unsigned)record->original.family,
         (unsigned)record->original.protocol, os, od,
         (unsigned)ntohs(record->original.sport), (unsigned)ntohs(record->original.dport),
         rs, rd, (unsigned)ntohs(record->reply.sport), (unsigned)ntohs(record->reply.dport),
@@ -53,4 +57,9 @@ int flow_json_format(const struct flow_record *record, char *buffer, size_t size
     if ((size_t)n >= size)
         return -ENOSPC;
     return n;
+}
+
+int flow_json_format(const struct flow_record *record, char *buffer, size_t size)
+{
+    return flow_json_format_event(record, "DESTROY", "legacy", buffer, size);
 }
