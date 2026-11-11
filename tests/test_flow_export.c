@@ -140,14 +140,44 @@ static void test_active_limit(void)
     reset();
 }
 
+static void test_disabled_and_config(void)
+{
+    struct flow_config cfg = { .enabled = false, .mark = 0x40000000U, .mark_mask = 0x40000000U, .max_flows = 2 };
+    struct flow_record r = sample(77, 0x40000000U);
+    reset();
+    assert(flow_configure(&cfg) == 0);
+    assert(flow_process(FLOW_NEW, &r) == 0);
+    assert(flow_active_count() == 0);
+    cfg.enabled = true;
+    cfg.mark = 0x10000000U;
+    cfg.mark_mask = 0x30000000U;
+    assert(flow_configure(&cfg) == 0);
+    assert(flow_process(FLOW_NEW, &r) == 0);
+    assert(flow_active_count() == 0);
+    r.mark = 0x50000000U;
+    assert(flow_process(FLOW_NEW, &r) == 0);
+    assert(flow_active_count() == 1);
+    assert(flow_configure(&cfg) == -EBUSY);
+    r.id++;
+    assert(flow_process(FLOW_NEW, &r) == 0);
+    r.id++;
+    assert(flow_process(FLOW_NEW, &r) == -ENOSPC);
+    reset();
+    cfg.mark = 0x40000000U;
+    assert(flow_configure(&cfg) == -EINVAL);
+}
+
 int main(void)
 {
+    struct flow_config cfg = { .enabled = true, .mark = 0x40000000U, .mark_mask = 0x40000000U, .max_flows = 16384 };
+    assert(flow_configure(&cfg) == 0);
     flow_set_complete_callback(on_complete, NULL);
     test_lifecycle();
     test_unmarked();
     test_missing_new();
     test_interleaved_ids();
     test_active_limit();
+    test_disabled_and_config();
     flow_cleanup();
     puts("flow accounting tests: PASS");
     return 0;
