@@ -422,7 +422,7 @@ server_main(int argc, char **argv)
 		FILE *boot = fopen("/proc/sys/kernel/random/boot_id", "r");
 		if (boot) {
 			if (fgets(flow_boot_id, sizeof(flow_boot_id), boot))
-				flow_boot_id[strcspn(flow_boot_id, "\\n")] = '\\0';
+				flow_boot_id[strcspn(flow_boot_id, "\n")] = '\0';
 			fclose(boot);
 		}
 		flow_set_start_callback(flow_started, flow_transport);
