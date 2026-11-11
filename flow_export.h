@@ -42,6 +42,14 @@ enum flow_event_type {
 
 typedef void (*flow_complete_cb)(const struct flow_record *record, void *ctx);
 
+struct flow_config {
+    bool enabled;
+    uint32_t mark;
+    uint32_t mark_mask;
+    size_t max_flows;
+};
+
+int flow_configure(const struct flow_config *config);
 void flow_set_complete_callback(flow_complete_cb callback, void *ctx);
 size_t flow_active_count(void);
 int flow_init(void);
