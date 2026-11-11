@@ -5,9 +5,8 @@
 
 #include "flow_export.h"
 
-#define FLOW_MARK_MASK 0x40000000U
 #define FLOW_BUCKETS 4096
-#define FLOW_MAX_ACTIVE 16384
+
 
 struct flow_entry {
     struct flow_record record;
@@ -16,6 +15,20 @@ struct flow_entry {
 
 static struct flow_entry *flows[FLOW_BUCKETS];
 static size_t active_count;
+static struct flow_config flow_options = { .enabled = false, .mark = 0x40000000U, .mark_mask = 0x40000000U, .max_flows = 16384 };
+
+int flow_configure(const struct flow_config *config)
+{
+    if (!config || !config->max_flows || config->max_flows > 1048576 ||
+        (config->mark & ~config->mark_mask))
+        return -EINVAL;
+
+    if (active_count)
+        return -EBUSY;
+
+    flow_options = *config;
+    return 0;
+}
 
 size_t flow_active_count(void)
 {
@@ -101,7 +114,8 @@ int flow_process(enum flow_event_type event,
     if (!record)
         return -EINVAL;
 
-    if (!(record->mark & FLOW_MARK_MASK))
+    if (!flow_options.enabled ||
+        (record->mark & flow_options.mark_mask) != flow_options.mark)
         return 0;
 
     if (event != FLOW_NEW &&
@@ -113,7 +127,7 @@ int flow_process(enum flow_event_type event,
     entry = *slot;
 
     if (!entry) {
-        if (active_count >= FLOW_MAX_ACTIVE)
+        if (active_count >= flow_options.max_flows)
             return -ENOSPC;
 
         entry = calloc(1, sizeof(*entry));
