@@ -14,6 +14,14 @@ struct flow_entry {
 };
 
 static struct flow_entry *flows[FLOW_BUCKETS];
+static flow_complete_cb complete_callback;
+static void *complete_context;
+
+void flow_set_complete_callback(flow_complete_cb callback, void *ctx)
+{
+    complete_callback = callback;
+    complete_context = ctx;
+}
 
 static unsigned int flow_hash(uint32_t id)
 {
@@ -138,7 +146,8 @@ int flow_process(enum flow_event_type event,
             stored->finished.tv_nsec == 0)
             clock_gettime(CLOCK_REALTIME, &stored->finished);
 
-        /* TODO: deliver completed flow to exporter. */
+        if (complete_callback)
+            complete_callback(stored, complete_context);
 
         *slot = entry->next;
         free(entry);
