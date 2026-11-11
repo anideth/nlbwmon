@@ -7,6 +7,7 @@
 
 #define FLOW_MARK_MASK 0x40000000U
 #define FLOW_BUCKETS 4096
+#define FLOW_MAX_ACTIVE 16384
 
 struct flow_entry {
     struct flow_record record;
@@ -14,6 +15,12 @@ struct flow_entry {
 };
 
 static struct flow_entry *flows[FLOW_BUCKETS];
+static size_t active_count;
+
+size_t flow_active_count(void)
+{
+    return active_count;
+}
 static flow_complete_cb complete_callback;
 static void *complete_context;
 
@@ -81,6 +88,7 @@ void flow_cleanup(void)
 
         flows[i] = NULL;
     }
+    active_count = 0;
 }
 
 int flow_process(enum flow_event_type event,
@@ -105,6 +113,9 @@ int flow_process(enum flow_event_type event,
     entry = *slot;
 
     if (!entry) {
+        if (active_count >= FLOW_MAX_ACTIVE)
+            return -ENOSPC;
+
         entry = calloc(1, sizeof(*entry));
         if (!entry)
             return -ENOMEM;
@@ -123,6 +134,7 @@ int flow_process(enum flow_event_type event,
             clock_gettime(CLOCK_REALTIME, &entry->record.started);
 
         *slot = entry;
+        active_count++;
     }
 
     stored = &entry->record;
@@ -151,6 +163,7 @@ int flow_process(enum flow_event_type event,
 
         *slot = entry->next;
         free(entry);
+        active_count--;
     }
 
     return 0;
