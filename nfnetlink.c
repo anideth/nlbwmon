@@ -142,8 +142,9 @@ parse_addrs(struct nlattr **tuple, uint8_t *family, void *saddr, void *daddr)
 
 	if (addrs[CTA_IP_V4_SRC] && addrs[CTA_IP_V4_DST]) {
 		*family = AF_INET;
-		((struct in_addr *)saddr)->s_addr = htobe32(nla_get_u32(addrs[CTA_IP_V4_SRC]));
-		((struct in_addr *)daddr)->s_addr = htobe32(nla_get_u32(addrs[CTA_IP_V4_DST]));
+		/* IPv4 netlink payloads are already in network byte order. */
+		nla_memcpy(saddr, addrs[CTA_IP_V4_SRC], sizeof(struct in_addr));
+		nla_memcpy(daddr, addrs[CTA_IP_V4_DST], sizeof(struct in_addr));
 		return true;
 	}
 	else if (addrs[CTA_IP_V6_SRC] && addrs[CTA_IP_V6_DST]) {
