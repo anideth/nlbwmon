@@ -48,6 +48,8 @@
 #include "protocol.h"
 #include "nfnetlink.h"
 #include "flow_export.h"
+#include "flow_json.h"
+#include "flow_tcp.h"
 #include "subnets.h"
 #include "socket.h"
 #include "client.h"
@@ -65,6 +67,23 @@
 
 static struct uloop_timer_type commit_tm = { };
 static struct uloop_timer_type refresh_tm = { };
+static struct uloop_timeout flow_tcp_tm = { };
+static struct flow_tcp *flow_transport;
+
+static void flow_completed(const struct flow_record *record, void *ctx)
+{
+	char line[1024];
+	int length = flow_json_format(record, line, sizeof(line));
+	if (length > 0)
+		flow_tcp_enqueue(ctx, line, (size_t)length);
+}
+
+static void flow_tcp_tick(struct uloop_timeout *tm)
+{
+	flow_tcp_step(flow_transport);
+	uloop_timeout_set(tm, 100);
+}
+
 
 struct options opt = {
 	.commit_interval = 86400,
@@ -216,8 +235,9 @@ server_main(int argc, char **argv)
 	int optchr, err;
 	char *e;
 	struct flow_config flow_cfg = { .enabled = false, .mark = 0x40000000U, .mark_mask = 0x40000000U, .max_flows = 16384 };
+	struct flow_tcp_config tcp_cfg = { .host = NULL, .port = 0, .queue_size = 1024, .reconnect_interval = 5 };
 
-	while ((optchr = getopt(argc, argv, "b:i:r:s:o:p:G:I:L:PZE:M:K:F:")) > -1) {
+	while ((optchr = getopt(argc, argv, "b:i:r:s:o:p:G:I:L:PZE:M:K:F:H:T:Q:R:")) > -1) {
 		switch (optchr) {
 		case 'b':
 			opt.netlink_buffer_size = (int)strtol(optarg, &e, 0);
@@ -328,6 +348,27 @@ server_main(int argc, char **argv)
 			break;
 		}
 
+		case 'H':
+			tcp_cfg.host = optarg;
+			break;
+		case 'T':
+		case 'Q':
+		case 'R': {
+			unsigned long value;
+			errno = 0;
+			value = strtoul(optarg, &e, 10);
+			if (errno || e == optarg || *e || !value ||
+			    (optchr == 'T' && value > 65535) ||
+			    (optchr == 'Q' && value > 65536) ||
+			    (optchr == 'R' && value > 3600)) {
+				fprintf(stderr, "Invalid flow TCP option '%s'\n", optarg);
+				return 1;
+			}
+			if (optchr == 'T') tcp_cfg.port = (uint16_t)value;
+			else if (optchr == 'Q') tcp_cfg.queue_size = (size_t)value;
+			else tcp_cfg.reconnect_interval = (unsigned int)value;
+			break;
+		}
 		case 'Z':
 			opt.db.compress = true;
 			break;
@@ -343,6 +384,15 @@ server_main(int argc, char **argv)
 	if (err) {
 		fprintf(stderr, "Invalid flow configuration: %s\n", strerror(-err));
 		return 1;
+	}
+
+	if (flow_cfg.enabled && tcp_cfg.host && tcp_cfg.port) {
+		flow_transport = flow_tcp_create(&tcp_cfg);
+		if (!flow_transport) {
+			fprintf(stderr, "Unable to configure flow TCP transport\n");
+			return 1;
+		}
+		flow_set_complete_callback(flow_completed, flow_transport);
 	}
 
 	uloop_init();
@@ -413,7 +463,15 @@ server_main(int argc, char **argv)
 	refresh_tm.cb = handle_refresh;
 	uloop_timer_set(&refresh_tm, opt.refresh_interval * 1000);
 
+	if (flow_transport) {
+		flow_tcp_tm.cb = flow_tcp_tick;
+		uloop_timeout_set(&flow_tcp_tm, 100);
+	}
+
 	uloop_run();
+	flow_set_complete_callback(NULL, NULL);
+	flow_tcp_destroy(flow_transport);
+	flow_transport = NULL;
 
 	return 0;
 }
