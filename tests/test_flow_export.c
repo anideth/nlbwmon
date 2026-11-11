@@ -167,12 +167,54 @@ static void test_disabled_and_config(void)
     assert(flow_configure(&cfg) == -EINVAL);
 }
 
+static void test_multiple_zero_dumps_and_residual(void)
+{
+    struct flow_record r = sample(600, 0x40000000U);
+    reset();
+    assert(flow_process(FLOW_NEW, &r) == 0);
+    r.orig_bytes = 1000; r.reply_bytes = 2000;
+    r.orig_packets = 10; r.reply_packets = 20;
+    assert(flow_process(FLOW_UPDATE, &r) == 0);
+    /* GET_CTRZERO zeroed counters: no traffic between polls. */
+    r.orig_bytes = 0; r.reply_bytes = 0;
+    r.orig_packets = 0; r.reply_packets = 0;
+    assert(flow_process(FLOW_UPDATE, &r) == 0);
+    r.orig_bytes = 300; r.reply_bytes = 400;
+    r.orig_packets = 3; r.reply_packets = 4;
+    assert(flow_process(FLOW_UPDATE, &r) == 0);
+    /* DESTROY returns only traffic since the last counter-zero dump. */
+    r.orig_bytes = 7; r.reply_bytes = 9;
+    r.orig_packets = 1; r.reply_packets = 1;
+    assert(flow_process(FLOW_DESTROY, &r) == 0);
+    assert(completions == 1);
+    assert(completed.orig_bytes == 1307);
+    assert(completed.reply_bytes == 2409);
+    assert(completed.orig_packets == 14);
+    assert(completed.reply_packets == 25);
+    assert(flow_active_count() == 0);
+}
+
+static void test_destroy_without_prior_events(void)
+{
+    struct flow_record r = sample(601, 0x40000000U);
+    reset();
+    r.orig_bytes = 123; r.reply_bytes = 456;
+    assert(flow_process(FLOW_DESTROY, &r) == 0);
+    assert(completions == 1);
+    assert(completed.orig_bytes == 123);
+    assert(completed.reply_bytes == 456);
+    assert(!completed.seen_new);
+    assert(flow_active_count() == 0);
+}
+
 int main(void)
 {
     struct flow_config cfg = { .enabled = true, .mark = 0x40000000U, .mark_mask = 0x40000000U, .max_flows = 16384 };
     assert(flow_configure(&cfg) == 0);
     flow_set_complete_callback(on_complete, NULL);
     test_lifecycle();
+    test_multiple_zero_dumps_and_residual();
+    test_destroy_without_prior_events();
     test_unmarked();
     test_missing_new();
     test_interleaved_ids();
