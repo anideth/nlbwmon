@@ -80,7 +80,7 @@ parse_config() {
 
 parse_flow_export() {
 	local cfg="$1"
-	local enabled mark mask max_flows
+	local enabled mark mask max_flows host port queue_size reconnect_interval
 
 	config_get_bool enabled "$cfg" enabled 0
 	[ "$enabled" -eq 1 ] || return 0
@@ -90,6 +90,14 @@ parse_flow_export() {
 	config_get max_flows "$cfg" max_flows 16384
 
 	procd_append_param command -E 1 -M "$mark" -K "$mask" -F "$max_flows"
+
+	config_get host "$cfg" tcp_host ""
+	config_get port "$cfg" tcp_port ""
+	config_get queue_size "$cfg" tcp_queue_size 1024
+	config_get reconnect_interval "$cfg" tcp_reconnect_interval 5
+	if [ -n "$host" ] && [ -n "$port" ]; then
+		procd_append_param command -H "$host" -T "$port" -Q "$queue_size" -R "$reconnect_interval"
+	fi
 }
 
 start_service() {
