@@ -8,12 +8,21 @@
 
 static struct flow_record completed;
 static unsigned int completions;
+static unsigned int starts;
+static struct flow_record started;
 
 static void on_complete(const struct flow_record *r, void *ctx)
 {
     (void)ctx;
     completed = *r;
     completions++;
+}
+
+static void on_start(const struct flow_record *r, void *ctx)
+{
+    (void)ctx;
+    started = *r;
+    starts++;
 }
 
 static struct flow_record sample(uint32_t id, uint32_t mark)
@@ -41,6 +50,8 @@ static void reset(void)
     flow_cleanup();
     memset(&completed, 0, sizeof(completed));
     completions = 0;
+    starts = 0;
+    memset(&started, 0, sizeof(started));
     assert(flow_active_count() == 0);
 }
 
@@ -51,6 +62,10 @@ static void test_lifecycle(void)
     assert(flow_process(FLOW_NEW, &r) == 0);
     assert(flow_process(FLOW_NEW, &r) == 0);
     assert(flow_active_count() == 1);
+    assert(starts == 1);
+    assert(started.id == r.id);
+    assert(started.started.tv_sec > 0);
+    assert(started.orig_bytes == 0);
     r.orig_bytes = 100;
     r.orig_packets = 2;
     r.reply_bytes = 200;
@@ -67,6 +82,9 @@ static void test_lifecycle(void)
     r.reply_packets = 1;
     assert(flow_process(FLOW_DESTROY, &r) == 0);
     assert(completions == 1);
+    assert(starts == 1);
+    assert(completed.started.tv_sec == started.started.tv_sec);
+    assert(completed.started.tv_nsec == started.started.tv_nsec);
     assert(completed.orig_bytes == 160);
     assert(completed.reply_bytes == 290);
     assert(completed.orig_packets == 4);
@@ -97,6 +115,7 @@ static void test_missing_new(void)
     assert(completions == 1);
     assert(completed.orig_bytes == 125);
     assert(!completed.seen_new);
+    assert(starts == 0);
 }
 
 static void test_interleaved_ids(void)
@@ -211,6 +230,7 @@ int main(void)
 {
     struct flow_config cfg = { .enabled = true, .mark = 0x40000000U, .mark_mask = 0x40000000U, .max_flows = 16384 };
     assert(flow_configure(&cfg) == 0);
+    flow_set_start_callback(on_start, NULL);
     flow_set_complete_callback(on_complete, NULL);
     test_lifecycle();
     test_multiple_zero_dumps_and_residual();
