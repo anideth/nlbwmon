@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdint.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <arpa/inet.h>
@@ -40,6 +41,7 @@ static void reset(void)
     flow_cleanup();
     memset(&completed, 0, sizeof(completed));
     completions = 0;
+    assert(flow_active_count() == 0);
 }
 
 static void test_lifecycle(void)
@@ -47,6 +49,8 @@ static void test_lifecycle(void)
     struct flow_record r = sample(1, 0x40000000U);
     reset();
     assert(flow_process(FLOW_NEW, &r) == 0);
+    assert(flow_process(FLOW_NEW, &r) == 0);
+    assert(flow_active_count() == 1);
     r.orig_bytes = 100;
     r.orig_packets = 2;
     r.reply_bytes = 200;
@@ -67,6 +71,7 @@ static void test_lifecycle(void)
     assert(completed.reply_bytes == 290);
     assert(completed.orig_packets == 4);
     assert(completed.reply_packets == 5);
+    assert(flow_active_count() == 0);
     assert(completed.seen_new);
     assert(completed.started.tv_sec > 0);
     assert(completed.finished.tv_sec > 0);
@@ -110,6 +115,29 @@ static void test_interleaved_ids(void)
     assert(flow_process(FLOW_DESTROY, &b) == 0);
     assert(completed.id == 5 && completed.orig_bytes == 26);
     assert(completions == 2);
+    assert(flow_active_count() == 0);
+}
+
+static void test_active_limit(void)
+{
+    struct flow_record r;
+    unsigned int i;
+    reset();
+    for (i = 0; i < 16384; i++) {
+        r = sample(1000 + i, 0x40000000U);
+        assert(flow_process(FLOW_NEW, &r) == 0);
+    }
+    assert(flow_active_count() == 16384);
+    r = sample(99999, 0x40000000U);
+    assert(flow_process(FLOW_NEW, &r) == -ENOSPC);
+    assert(flow_active_count() == 16384);
+    r = sample(1000, 0x40000000U);
+    assert(flow_process(FLOW_DESTROY, &r) == 0);
+    assert(flow_active_count() == 16383);
+    r = sample(99999, 0x40000000U);
+    assert(flow_process(FLOW_NEW, &r) == 0);
+    assert(flow_active_count() == 16384);
+    reset();
 }
 
 int main(void)
@@ -119,6 +147,7 @@ int main(void)
     test_unmarked();
     test_missing_new();
     test_interleaved_ids();
+    test_active_limit();
     flow_cleanup();
     puts("flow accounting tests: PASS");
     return 0;
