@@ -1,4 +1,55 @@
-# nlbwmon - Simple conntrack netlink based traffic accounting
+# nlbwmon — experimental conntrack flow export fork
+
+> **Unofficial fork of [jow-/nlbwmon](https://github.com/jow-/nlbwmon).** The original bandwidth accounting functionality remains the foundation of this project. The flow exporter is experimental, **disabled by default**, and has not yet been validated on a live OpenWrt router. This is not an official OpenWrt package.
+
+This branch adds optional, per-connection flow records to nlbwmon's existing Linux conntrack accounting. It uses the daemon's existing netlink processing instead of running a second zero-on-read conntrack poller. Completed flows can be formatted as newline-delimited JSON (JSONL) and sent to a configured TCP collector.
+
+## What this fork adds
+
+- Flow tracking using conntrack NEW, periodic counter snapshots (GET_CTRZERO), and DESTROY events.
+- Original and reply tuples, including NAT-related addresses and ports, plus directional packet/byte totals.
+- Configurable conntrack mark/mask filtering and a bounded in-memory flow table.
+- Optional nonblocking TCP transport with a bounded queue and reconnect attempts.
+- An optional OpenWrt UCI `config flow_export` section, disabled by default.
+- Synthetic parser integration tests and transport tests; an ARM64 QEMU test runner.
+
+**Important limitations:** TCP delivery is best-effort, with no application-level acknowledgement, persistent queue, or deduplication. Records may be lost when the collector is unavailable or the queue fills. This is not a reliable audit log. Only flows matching the configured mark/mask are eligible; kernel events and counters are subject to conntrack limitations. Do not run two independent GET_CTRZERO pollers against the same conntrack table.
+
+## Quick configuration (OpenWrt)
+
+The fork's example UCI configuration is in [openwrt/files/nlbwmon.config](openwrt/files/nlbwmon.config). The matching procd init script is [openwrt/files/nlbwmon.init](openwrt/files/nlbwmon.init). The OpenWrt SDK package recipe must install **both** files; simply building the source tree does not automatically replace files from the official package feed.
+
+```uci
+config flow_export
+    option enabled '0'
+    option mark '0x40000000'
+    option mark_mask '0x40000000'
+    option max_flows '16384'
+    option tcp_host ''
+    option tcp_port ''
+    option tcp_queue_size '1024'
+    option tcp_reconnect_interval '5'
+```
+
+Set `enabled` to `1` and supply **both** `tcp_host` and `tcp_port` to enable TCP delivery. The receiver must accept a stream of JSON objects separated by newline characters. TCP is unencrypted and unauthenticated; restrict it to a trusted network or protect it with a separate secure transport.
+
+See [docs/FLOW_EXPORT.md](docs/FLOW_EXPORT.md) for configuration, record schema, tests, packaging and known limitations.
+
+## Status and compatibility
+
+- **Development branch:** `feature/conntrack-flow-export`; keep the fork's `master` branch aligned with upstream.
+- **Build tested:** OpenWrt SDK 25.12.6, target `mediatek/filogic`, architecture `aarch64_cortex-a53`.
+- **Tests:** synthetic conntrack parser integration under QEMU and local transport/unit tests.
+- **Not yet verified:** end-to-end operation on a live router, long-running accounting accuracy, and upgrades from the stock package.
+- **Binary packages:** publish only as clearly labeled prerelease assets after validating the package contents and deployment procedure. Do not assume an APK is portable across OpenWrt releases or architectures.
+
+## Upstream
+
+This fork is intended to remain mergeable with [the original project](https://github.com/jow-/nlbwmon). Parser correctness fixes, core flow tracking and transport support should be proposed as separate, reviewable changes if upstream contributions become practical. Existing upstream documentation follows below.
+
+---
+
+# Original nlbwmon documentation (upstream)
 
 ## Description
 
