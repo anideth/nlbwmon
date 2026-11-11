@@ -37,3 +37,19 @@ target_link_libraries(nlbwmon ubox z)
 set(CMAKE_INSTALL_PREFIX /usr)
 
 install(TARGETS nlbwmon RUNTIME DESTINATION sbin)
+
+# Optional integration test; links the real parser and discards unrelated
+# daemon functions so no live conntrack socket or database is needed.
+option(BUILD_FLOW_PARSER_TEST "Build synthetic conntrack parser test" OFF)
+if(BUILD_FLOW_PARSER_TEST)
+  add_executable(test_nfnetlink_parser
+    tests/test_nfnetlink_parser.c nfnetlink.c flow_export.c)
+  target_compile_options(test_nfnetlink_parser PRIVATE -ffunction-sections -fdata-sections)
+  set_target_properties(test_nfnetlink_parser PROPERTIES LINK_FLAGS "-Wl,--gc-sections")
+  if(LIBNL_LIBRARY_TINY)
+    target_link_libraries(test_nfnetlink_parser nl-tiny)
+  else()
+    target_link_libraries(test_nfnetlink_parser ${LIBNL_LIBRARY} ${LIBNL_GENL_LIBRARY})
+  endif()
+  target_link_libraries(test_nfnetlink_parser ubox)
+endif()
