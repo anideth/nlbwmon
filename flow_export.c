@@ -88,21 +88,31 @@ int flow_process(enum flow_event_type event,
     if (!(record->mark & FLOW_MARK_MASK))
         return 0;
 
+    if (event != FLOW_NEW &&
+        event != FLOW_UPDATE &&
+        event != FLOW_DESTROY)
+        return -EINVAL;
+
     slot = flow_find(record);
     entry = *slot;
 
     if (!entry) {
         entry = calloc(1, sizeof(*entry));
-
         if (!entry)
             return -ENOMEM;
 
         entry->record = *record;
+
         entry->record.orig_packets = 0;
         entry->record.orig_bytes = 0;
         entry->record.reply_packets = 0;
         entry->record.reply_bytes = 0;
+
         entry->record.seen_new = (event == FLOW_NEW);
+
+        if (entry->record.started.tv_sec == 0 &&
+            entry->record.started.tv_nsec == 0)
+            clock_gettime(CLOCK_REALTIME, &entry->record.started);
 
         *slot = entry;
     }
@@ -111,8 +121,8 @@ int flow_process(enum flow_event_type event,
 
     if (event == FLOW_NEW) {
         if (!stored->seen_new) {
-            stored->started = record->started;
             stored->seen_new = true;
+            /* Preserve the earliest observed start time. */
         }
     } else {
         stored->orig_packets += record->orig_packets;
@@ -124,12 +134,11 @@ int flow_process(enum flow_event_type event,
     if (event == FLOW_DESTROY) {
         stored->finished = record->finished;
 
-        /* TODO: export completed flow before removing it */
-        fprintf(stderr,
-                "flow completed: id=%u sent=%llu received=%llu\n",
-                stored->id,
-                (unsigned long long)stored->orig_bytes,
-                (unsigned long long)stored->reply_bytes);
+        if (stored->finished.tv_sec == 0 &&
+            stored->finished.tv_nsec == 0)
+            clock_gettime(CLOCK_REALTIME, &stored->finished);
+
+        /* TODO: deliver completed flow to exporter. */
 
         *slot = entry->next;
         free(entry);
