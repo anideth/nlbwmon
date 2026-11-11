@@ -18,10 +18,10 @@ int main(void)
     r.reply.family = AF_INET;
     r.original.protocol = IPPROTO_TCP;
     r.reply.protocol = IPPROTO_TCP;
-    r.original.sport = 12345;
-    r.original.dport = 443;
-    r.reply.sport = 443;
-    r.reply.dport = 12345;
+    r.original.sport = htons(12345);
+    r.original.dport = htons(443);
+    r.reply.sport = htons(443);
+    r.reply.dport = htons(12345);
     r.orig_bytes = 1234567890123ULL;
     r.reply_bytes = 999;
     r.started.tv_sec = 100;
@@ -37,6 +37,10 @@ int main(void)
     assert((size_t)n == strlen(json));
     assert(strstr(json, "\"orig_src\":\"192.0.2.10\""));
     assert(strstr(json, "\"orig_bytes\":1234567890123"));
+    assert(strstr(json, "\"orig_sport\":12345"));
+    assert(strstr(json, "\"orig_dport\":443"));
+    assert(strstr(json, "\"reply_sport\":443"));
+    assert(strstr(json, "\"reply_dport\":12345"));
     assert(strstr(json, "\"seen_new\":true"));
     assert(json[n - 1] == '\n');
     assert(flow_json_format(&r, tiny, sizeof(tiny)) == -ENOSPC);
