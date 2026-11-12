@@ -74,11 +74,12 @@ static uint64_t flow_tcp_last_dropped;
 static time_t flow_tcp_last_warning;
 
 static char flow_boot_id[40] = "unknown";
+static char flow_router_name[64] = "unknown";
 
 static void flow_emit(const struct flow_record *record, const char *event_type, void *ctx)
 {
 	char line[2048];
-	int length = flow_json_format_event(record, event_type, flow_boot_id, line, sizeof(line));
+	int length = flow_json_format_event(record, event_type, flow_boot_id, flow_router_name, line, sizeof(line));
 	if (length > 0)
 		flow_tcp_enqueue(ctx, line, (size_t)length);
 }
@@ -264,7 +265,7 @@ server_main(int argc, char **argv)
 	struct flow_config flow_cfg = { .enabled = false, .mark = 0x40000000U, .mark_mask = 0x40000000U, .max_flows = 16384 };
 	struct flow_tcp_config tcp_cfg = { .host = NULL, .port = 0, .queue_size = 1024, .reconnect_interval = 5 };
 
-	while ((optchr = getopt(argc, argv, "b:i:r:s:o:p:G:I:L:PZE:M:K:F:H:T:Q:R:")) > -1) {
+	while ((optchr = getopt(argc, argv, "b:i:r:s:o:p:G:I:L:PZE:M:K:F:H:T:Q:R:N:")) > -1) {
 		switch (optchr) {
 		case 'b':
 			opt.netlink_buffer_size = (int)strtol(optarg, &e, 0);
@@ -375,6 +376,23 @@ server_main(int argc, char **argv)
 			break;
 		}
 
+		case 'N': {
+			size_t i, len = strlen(optarg);
+			if (!len || len >= sizeof(flow_router_name)) {
+				fprintf(stderr, "Invalid router name length\\n");
+				return 1;
+			}
+			for (i = 0; i < len; i++) {
+				char c = optarg[i];
+				if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+				      (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.')) {
+					fprintf(stderr, "Invalid router name character\\n");
+					return 1;
+				}
+			}
+			memcpy(flow_router_name, optarg, len + 1);
+			break;
+		}
 		case 'H':
 			tcp_cfg.host = optarg;
 			break;
