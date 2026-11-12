@@ -199,9 +199,10 @@ track_flow(struct nlattr **attr, bool from_dump, unsigned int msg_type,
 	struct flow_record flow = { };
 	enum flow_event_type event;
 
-	if (!attr[CTA_ID] || !attr[CTA_MARK] ||
-	    nla_len(attr[CTA_ID]) != sizeof(uint32_t) ||
-	    nla_len(attr[CTA_MARK]) != sizeof(uint32_t))
+	if (!attr[CTA_ID] || nla_len(attr[CTA_ID]) != sizeof(uint32_t))
+		return;
+
+	if (attr[CTA_MARK] && nla_len(attr[CTA_MARK]) != sizeof(uint32_t))
 		return;
 
 	if (from_dump)
@@ -215,7 +216,7 @@ track_flow(struct nlattr **attr, bool from_dump, unsigned int msg_type,
 
 	/* Conntrack CTA_ID and CTA_MARK are network-byte-order attributes. */
 	flow.id = ntohl(nla_get_u32(attr[CTA_ID]));
-	flow.mark = ntohl(nla_get_u32(attr[CTA_MARK]));
+	flow.mark = attr[CTA_MARK] ? ntohl(nla_get_u32(attr[CTA_MARK])) : 0;
 	flow.original.family = family;
 	flow.original.protocol = orig_proto;
 	flow.original.src = *orig_src;
