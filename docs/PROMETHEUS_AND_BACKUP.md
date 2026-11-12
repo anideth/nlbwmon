@@ -22,6 +22,36 @@ Expect `nlbwmon_rx_bytes`, `nlbwmon_tx_bytes`, `nlbwmon_connections` with `famil
 
 If the exporter's HTTP endpoint is working but nlbwmon metrics are absent, check the manually installed Lua file and scrape status **before** touching conntrack, netlink, sysctls, nftables, or firmware. Do not replace the author-maintained collector with an untested script. If exporter refuses to start after an upgrade, inspect `logread`, installed `uhttpd` and `uhttpd-mod-lua` versions and the corresponding Lua module, rather than blindly reinstalling networking packages.
 
+## Preferred firmware update workflow (OpenWrt 25.12.x / APK / owut)
+
+On the tested OpenWrt 25.12.6 router, use `owut` to request a firmware image with a compatible package set, rather than flashing a generic image and then manually attempting to reconstruct packages. **This is still not a full backup**, and packages outside the image builder's known repositories, plus manually copied files, are not guaranteed to be included.
+
+Run on the router, one step at a time:
+
+```sh
+owut check
+```
+
+Review the proposed OpenWrt version, kernel, package changes and any missing or incompatible packages. Do not proceed until errors and unexpected removals are understood.
+
+```sh
+owut download
+```
+
+Build/download the candidate image. Inspect the result and ensure the intended image is available before upgrading.
+
+```sh
+sysupgrade -b /tmp/openwrt-backup.tgz
+```
+
+**Copy the backup archive off the router** and verify its contents before rebooting. Save the installed package inventory and any custom scripts, APKs, firmware and accounting databases separately. Check `sysupgrade -l` for the external Prometheus collector and other manually installed files. `/tmp` is ephemeral.
+
+```sh
+owut upgrade
+```
+
+Only after confirming the image, backup and package plan. Confirm which image `owut upgrade` will flash; do not assume it necessarily uses the previously downloaded file. Keep the backup and recovery path available. After boot, follow the verification checklist below. **Do not use `sysupgrade -n`** when retaining configuration is required. Test any restore on the matching firmware release and do not blindly restore incompatible system libraries or old package binaries.
+
 ## Backup before sysupgrade
 
 OpenWrt `sysupgrade` with configuration retention **is not a full filesystem image**. It can preserve configuration files but drops manually installed application code in `/usr/lib` and installed packages may need reinstalling. Always do a preflight and store the archives **outside the router**, ideally in versioned, access-controlled storage. Take care: UCI configs, hostnames, IPs, DHCP leases, passwords, private keys and network topology may be sensitive; do not commit unredacted backups to a public repository.
