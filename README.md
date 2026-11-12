@@ -45,6 +45,21 @@ Set `enabled` to `1` and supply **both** `tcp_host` and `tcp_port` to enable TCP
 
 See [docs/FLOW_EXPORT.md](docs/FLOW_EXPORT.md) for configuration, record schema, tests, packaging and known limitations.
 
+
+## Prometheus per-device traffic monitoring (optional)
+
+The JSONL conntrack flow exporter in this fork and the nlbwmon Prometheus collector are **different, independent features**. The former is experimental, disabled by default, and not a Prometheus exporter; the latter reads the standard `nlbw -c csv` output. **The collector is not bundled in the nlbwmon APK or in prometheus-node-exporter-lua packages.**
+
+For Grafana per-host monitoring, use the third-party [OpenWrt nlbwmon Prometheus collector by giuliomagnifico](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector). See [installation, verification, backup and upgrade recovery instructions](docs/PROMETHEUS_AND_BACKUP.md). It publishes `nlbwmon_rx_bytes`, `nlbwmon_tx_bytes`, and `nlbwmon_connections` with `family`, `proto`, `port`, `mac`, `ip`, `hostname`, and `layer7` labels. See the author's repository for Grafana examples. The author's independent code and its updates are not maintained by this fork.
+
+On OpenWrt, after installing the required packages and ensuring the collector directory exists:
+
+```sh
+wget -O /usr/lib/lua/prometheus-collectors/nlbwmon.lua https://raw.githubusercontent.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector/main/nlbwmon.lua && /etc/init.d/prometheus-node-exporter-lua restart
+```
+
+A firmware upgrade with preserved configuration does **not** necessarily preserve manually installed files under `/usr/lib` or reinstall extra packages. Follow the linked backup checklist **before** any `sysupgrade`.
+
 ## Status and compatibility
 
 - **Development branch:** `feature/conntrack-flow-export`; keep the fork's `master` branch aligned with upstream.
