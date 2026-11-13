@@ -264,6 +264,21 @@ void flow_tcp_step(struct flow_tcp *tcp)
         tcp->connecting = false;
     }
 
+    /*
+     * Detect an idle connection closed by the receiver. MSG_PEEK does not
+     * consume data; EAGAIN simply means the connection is still open.
+     * Without this check, reconnect waits for another queued flow event.
+     */
+    {
+        char probe;
+        n = recv(tcp->fd, &probe, sizeof(probe), MSG_PEEK | MSG_DONTWAIT);
+        if (n == 0 || (n < 0 && errno != EAGAIN &&
+                       errno != EWOULDBLOCK && errno != EINTR)) {
+            disconnect_tcp(tcp);
+            return;
+        }
+    }
+
     while (tcp->head && budget--) {
         struct flow_tcp_item *item = tcp->head;
         n = send(tcp->fd, item->data + item->offset,
