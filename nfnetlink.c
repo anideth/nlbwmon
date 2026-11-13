@@ -230,6 +230,16 @@ track_flow(struct nlattr **attr, bool from_dump, unsigned int msg_type,
 	flow.reply.sport = reply_sport;
 	flow.reply.dport = reply_dport;
 
+	/* The legacy database uses byte-swapped IPv4 addresses for subnet matching.
+	 * Convert only the flow-export copies back to network byte order so that
+	 * inet_ntop() emits correct addresses; leave database accounting untouched. */
+	if (family == AF_INET) {
+		flow.original.src.s6_addr32[0] = htobe32(flow.original.src.s6_addr32[0]);
+		flow.original.dst.s6_addr32[0] = htobe32(flow.original.dst.s6_addr32[0]);
+		flow.reply.src.s6_addr32[0] = htobe32(flow.reply.src.s6_addr32[0]);
+		flow.reply.dst.s6_addr32[0] = htobe32(flow.reply.dst.s6_addr32[0]);
+	}
+
 	/* Kernel conntrack counters are encoded in network byte order. */
 	flow.orig_packets = be64toh(orig_pkts);
 	flow.orig_bytes = be64toh(orig_bytes);
