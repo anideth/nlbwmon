@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include "flow_export.h"
 #include <sys/select.h>
 #include <time.h>
 #include <unistd.h>
@@ -13,6 +15,13 @@
 
 #define FLOW_TCP_MAX_RECORD 2048
 #define FLOW_TCP_MAX_QUEUE 65536
+#define FLOW_TCP_RECENT_CONNECTIONS 128
+
+struct flow_tcp_endpoint {
+    struct sockaddr_storage local;
+    struct sockaddr_storage remote;
+    bool valid;
+};
 
 struct flow_tcp_item {
     struct flow_tcp_item *next;
@@ -33,6 +42,8 @@ struct flow_tcp {
     uint64_t dropped;
     struct flow_tcp_item *head;
     struct flow_tcp_item *tail;
+    struct flow_tcp_endpoint recent[FLOW_TCP_RECENT_CONNECTIONS];
+    unsigned int recent_next;
 };
 
 static time_t monotonic_seconds(void)
@@ -152,6 +163,54 @@ uint64_t flow_tcp_dropped(const struct flow_tcp *tcp)
     return tcp ? tcp->dropped : 0;
 }
 
+static void remember_connection(struct flow_tcp *tcp)
+{
+    struct flow_tcp_endpoint *ep;
+    socklen_t length = sizeof(struct sockaddr_storage);
+
+    if (tcp->fd < 0)
+        return;
+    ep = &tcp->recent[tcp->recent_next % FLOW_TCP_RECENT_CONNECTIONS];
+    memset(ep, 0, sizeof(*ep));
+    if (getsockname(tcp->fd, (struct sockaddr *)&ep->local, &length))
+        return;
+    ep->remote = tcp->address;
+    ep->valid = true;
+    tcp->recent_next++;
+}
+
+bool flow_tcp_is_own_flow(const struct flow_tcp *tcp, const struct flow_record *record)
+{
+    unsigned int i;
+
+    if (!tcp || !record || record->original.protocol != IPPROTO_TCP)
+        return false;
+    for (i = 0; i < FLOW_TCP_RECENT_CONNECTIONS; i++) {
+        const struct flow_tcp_endpoint *ep = &tcp->recent[i];
+        if (!ep->valid || ep->local.ss_family != record->original.family ||
+            ep->remote.ss_family != record->original.family)
+            continue;
+        if (ep->local.ss_family == AF_INET) {
+            const struct sockaddr_in *local = (const void *)&ep->local;
+            const struct sockaddr_in *remote = (const void *)&ep->remote;
+            if (record->original.sport == local->sin_port &&
+                record->original.dport == remote->sin_port &&
+                memcmp(&record->original.src, &local->sin_addr, 4) == 0 &&
+                memcmp(&record->original.dst, &remote->sin_addr, 4) == 0)
+                return true;
+        } else if (ep->local.ss_family == AF_INET6) {
+            const struct sockaddr_in6 *local = (const void *)&ep->local;
+            const struct sockaddr_in6 *remote = (const void *)&ep->remote;
+            if (record->original.sport == local->sin6_port &&
+                record->original.dport == remote->sin6_port &&
+                memcmp(&record->original.src, &local->sin6_addr, 16) == 0 &&
+                memcmp(&record->original.dst, &remote->sin6_addr, 16) == 0)
+                return true;
+        }
+    }
+    return false;
+}
+
 void flow_tcp_step(struct flow_tcp *tcp)
 {
     int error, fd, flags;
@@ -184,6 +243,8 @@ void flow_tcp_step(struct flow_tcp *tcp)
             }
             tcp->connecting = true;
         }
+        /* Record the ephemeral source port even while connect is pending. */
+        remember_connection(tcp);
     }
 
     if (tcp->connecting) {
