@@ -110,7 +110,7 @@ static void flow_tcp_tick(struct uloop_timeout *tm)
 	now = time(NULL);
 	if (dropped != flow_tcp_last_dropped &&
 	    (flow_tcp_last_warning == 0 || now - flow_tcp_last_warning >= 60)) {
-		fprintf(stderr, "Flow TCP queue: dropped=%" PRIu64 ", queued=%zu\\n",
+		fprintf(stderr, "Flow TCP queue: dropped=%" PRIu64 ", queued=%zu\n",
 		        dropped, flow_tcp_queued(flow_transport));
 		flow_tcp_last_dropped = dropped;
 		flow_tcp_last_warning = now;
@@ -385,14 +385,14 @@ server_main(int argc, char **argv)
 		case 'N': {
 			size_t i, len = strlen(optarg);
 			if (!len || len >= sizeof(flow_router_name)) {
-				fprintf(stderr, "Invalid router name length\\n");
+				fprintf(stderr, "Invalid router name length\n");
 				return 1;
 			}
 			for (i = 0; i < len; i++) {
 				char c = optarg[i];
 				if (!((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
 				      (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.')) {
-					fprintf(stderr, "Invalid router name character\\n");
+					fprintf(stderr, "Invalid router name character\n");
 					return 1;
 				}
 			}
