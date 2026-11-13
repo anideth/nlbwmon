@@ -79,7 +79,13 @@ static char flow_router_name[64] = "unknown";
 static void flow_emit(const struct flow_record *record, const char *event_type, void *ctx)
 {
 	char line[2048];
-	int length = flow_json_format_event(record, event_type, flow_boot_id, flow_router_name, line, sizeof(line));
+	int length;
+
+	/* Exclude only this exporter socket, leaving legacy accounting untouched. */
+	if (flow_tcp_is_own_flow(ctx, record))
+		return;
+
+	length = flow_json_format_event(record, event_type, flow_boot_id, flow_router_name, line, sizeof(line));
 	if (length > 0)
 		flow_tcp_enqueue(ctx, line, (size_t)length);
 }
