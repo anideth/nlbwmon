@@ -10,7 +10,7 @@
 > **Use only in an isolated test environment unless you understand the risks.** Back up your OpenWrt configuration and accounting database, retain the original package and a tested rollback procedure. This is an unofficial fork, not an endorsed upstream or OpenWrt release.
 
 
-> **Unofficial fork of [jow-/nlbwmon](https://github.com/jow-/nlbwmon).** The original bandwidth accounting functionality remains the foundation of this project. The flow exporter is experimental, **disabled by default**, and has not yet been validated on a live OpenWrt router. This is not an official OpenWrt package.
+> **Unofficial fork of [jow-/nlbwmon](https://github.com/jow-/nlbwmon).** The original bandwidth accounting functionality remains the foundation of this project. The flow exporter is experimental, **disabled by default**, and is currently undergoing isolated OpenWrt lab validation. This is not an official OpenWrt package.
 
 This branch adds optional, per-connection flow records to nlbwmon's existing Linux conntrack accounting. It uses the daemon's existing netlink processing instead of running a second zero-on-read conntrack poller. Completed flows can be formatted as newline-delimited JSON (JSONL) and sent to a configured TCP collector.
 
@@ -43,7 +43,7 @@ config flow_export
 
 Set `enabled` to `1` and supply **both** `tcp_host` and `tcp_port` to enable TCP delivery. The receiver must accept a stream of JSON objects separated by newline characters. TCP is unencrypted and unauthenticated; restrict it to a trusted network or protect it with a separate secure transport.
 
-See [docs/FLOW_EXPORT.md](docs/FLOW_EXPORT.md) for configuration, record schema, tests, packaging and known limitations.
+See [docs/FLOW_EXPORT.md](docs/FLOW_EXPORT.md) for configuration and protocol details, and [docs/limitations.md](docs/limitations.md) for delivery guarantees, privacy, known risks, and verified vs unverified behavior.
 
 
 ## Prometheus per-device traffic monitoring (optional)
@@ -62,10 +62,10 @@ A firmware upgrade with preserved configuration does **not** necessarily preserv
 
 ## Status and compatibility
 
-- **Development branch:** `feature/conntrack-flow-export`; keep the fork's `master` branch aligned with upstream.
+- **Development branch:** `feature/flow-lifecycle-events`; keep the fork's `master` branch aligned with upstream.
 - **Build tested:** OpenWrt SDK 25.12.6, target `mediatek/filogic`, architecture `aarch64_cortex-a53`.
 - **Tests:** synthetic conntrack parser integration under QEMU and local transport/unit tests.
-- **Not yet verified:** end-to-end operation on a live router, long-running accounting accuracy, and upgrades from the stock package.
+- **Lab verified:** NEW JSONL events, idle reconnect, bounded queue overflow, and queued-line transfer after reconnect on an isolated OpenWrt test router. **Not yet verified:** complete end-to-end accounting accuracy, all NAT/IPv6 topologies, long-running stability, and upgrades from the stock package.
 - **Binary packages:** publish only as clearly labeled prerelease assets after validating the package contents and deployment procedure. Do not assume an APK is portable across OpenWrt releases or architectures.
 
 ## Upstream
