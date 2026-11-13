@@ -36,7 +36,9 @@
 
 
 static uint32_t n_pending_inserts = 0;
+/* Keep multicast notifications separate from synchronous counter-zero dumps. */
 static struct nl_sock *nl = NULL;
+static struct nl_sock *dump_nl = NULL;
 static struct uloop_fd ufd = { };
 
 static struct nla_policy ct_tuple_policy[CTA_TUPLE_MAX+1] = {
@@ -440,12 +442,6 @@ handle_ack(struct nl_msg *msg, void *arg)
 	return NL_STOP;
 }
 
-static int
-handle_seq(struct nl_msg *msg, void *arg)
-{
-	return NL_OK;
-}
-
 static void
 check_rmem_max(int bufsize)
 {
@@ -486,9 +482,19 @@ nfnetlink_connect(int bufsize)
 	                                  NFNLGRP_CONNTRACK_DESTROY, 0))
 		return -errno;
 
+	/* No multicast subscriptions on the dump socket: replies cannot
+	 * consume NEW/DESTROY notifications intended for the event socket. */
+	dump_nl = nl_socket_alloc();
+	if (!dump_nl)
+		return -ENOMEM;
+	if (nl_connect(dump_nl, NETLINK_NETFILTER))
+		return -errno;
+
 	check_rmem_max(bufsize);
 
 	if (nl_socket_set_buffer_size(nl, bufsize, 0))
+		return -errno;
+	if (nl_socket_set_buffer_size(dump_nl, bufsize, 0))
 		return -errno;
 
 	ufd.cb = handle_event;
@@ -586,14 +592,13 @@ nfnetlink_dump(bool allow_insert)
 	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM, handle_dump, &allow_insert);
 	nl_cb_set(cb, NL_CB_FINISH, NL_CB_CUSTOM, handle_finish, &err);
 	nl_cb_set(cb, NL_CB_ACK, NL_CB_CUSTOM, handle_ack, &err);
-	nl_cb_set(cb, NL_CB_SEQ_CHECK, NL_CB_CUSTOM, handle_seq, NULL);
 	nl_cb_err(cb, NL_CB_CUSTOM, handle_error, &err);
 
-	if (nl_send_auto_complete(nl, req) < 0)
+	if (nl_send_auto_complete(dump_nl, req) < 0)
 		goto err;
 
 	for (err = 1; err > 0; ) {
-		ret = nl_recvmsgs(nl, cb);
+		ret = nl_recvmsgs(dump_nl, cb);
 
 		if (ret < 0) {
 			fprintf(stderr, "Netlink receive failure: %s\n", nl_geterror(ret));
