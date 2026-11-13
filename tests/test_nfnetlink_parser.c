@@ -161,6 +161,16 @@ int main(void)
     assert(completed.orig_bytes == 160);
     assert(completed.reply_packets == 11);
     assert(completed.reply_bytes == 290);
+    /* Regression: asynchronous DELETE delivered by the dump callback must
+     * finish the flow, not be accumulated as a FLOW_UPDATE. */
+    emit(IPCTNL_MSG_CT_NEW, false, true, true, 0, 0, 0, 0);
+    assert(flow_active_count() == 1);
+    emit(IPCTNL_MSG_CT_GET_CTRZERO, true, true, true, 2, 100, 3, 200);
+    emit(IPCTNL_MSG_CT_DELETE, true, true, true, 1, 10, 2, 20);
+    assert(completions == 2);
+    assert(flow_active_count() == 0);
+    assert(completed.orig_bytes == 110);
+    assert(completed.reply_bytes == 220);
     assert(completed.original.sport == htons(51000));
     assert(completed.original.dport == htons(443));
     assert(completed.reply.sport == htons(443));
