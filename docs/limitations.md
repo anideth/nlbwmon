@@ -1,6 +1,6 @@
 # Flow exporter: guarantees and limitations
 
-Status: experimental feature branch, not a production-ready audit or billing system. These statements describe the current implementation, not a future roadmap.
+Status: experimental pre-release development, not a production-ready audit or billing system. See [versioning](VERSIONING.md) and [lab validation](lab-validation-2026-11-13.md). These statements describe the current implementation, not a future roadmap.
 
 ## Delivery semantics (current)
 
@@ -30,6 +30,8 @@ Status: experimental feature branch, not a production-ready audit or billing sys
 ## Tested vs unverified
 
 Observed in an isolated OpenWrt lab: JSONL NEW events, idle TCP reconnect after receiver shutdown, bounded queue with `-Q 8` (8 queued / 22 dropped in one test), and delivery of 8 queued lines after the receiver restarted. All 8 lines were rejected by the shadow classifier because that particular test used traffic between configured local networks; this is **not** evidence of 8 accepted/accounted flows.
+
+A bounded x86-64 lab stress test observed 3,158 kernel Netlink drops; after the receive-overrun recovery fix, event polling remained registered and 30 subsequent test flows produced matched NEW/DESTROY events without a daemon restart. The missing kernel events were **not** recovered. This establishes recovery in that lab run, not lossless operation. Fluent Bit/OpenSearch end-to-end ingestion remains untested.
 
 Not yet established: loss-free operation under arbitrary socket failures, end-to-end delivery guarantees, absence of duplicates, long-duration accounting correctness, all IPv6/NAT topologies, package upgrade/rollback across targets, and production safety.
 
