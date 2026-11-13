@@ -500,7 +500,11 @@ nfnetlink_connect(int bufsize)
 	ufd.cb = handle_event;
 	ufd.fd = nl_socket_get_fd(nl);
 
-	if (uloop_fd_add(&ufd, ULOOP_READ))
+	/* Netlink reports receive overruns as EPOLLERR. Without ERROR_CB,
+	 * uloop silently unregisters the socket and NEW/DESTROY reception
+	 * never resumes. Keep it registered so handle_event() can drain it
+	 * (including on error-only wakeups) after a transient overrun. */
+	if (uloop_fd_add(&ufd, ULOOP_READ | ULOOP_ERROR_CB))
 		return -errno;
 
 	return 0;
