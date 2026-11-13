@@ -205,12 +205,14 @@ track_flow(struct nlattr **attr, bool from_dump, unsigned int msg_type,
 	if (attr[CTA_MARK] && nla_len(attr[CTA_MARK]) != sizeof(uint32_t))
 		return;
 
-	if (from_dump)
+	/* A DELETE notification can arrive while a counter-zero dump is read.
+	 * Never treat it as a counter delta: complete the flow instead. */
+	if (msg_type == IPCTNL_MSG_CT_DELETE)
+		event = FLOW_DESTROY;
+	else if (from_dump)
 		event = FLOW_UPDATE;
 	else if (msg_type == IPCTNL_MSG_CT_NEW)
 		event = FLOW_NEW;
-	else if (msg_type == IPCTNL_MSG_CT_DELETE)
-		event = FLOW_DESTROY;
 	else
 		return;
 
