@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 struct flow_tcp;
+struct flow_record;
 
 struct flow_tcp_config {
     const char *host;
@@ -21,5 +22,7 @@ int flow_tcp_enqueue(struct flow_tcp *transport, const char *json, size_t length
 void flow_tcp_step(struct flow_tcp *transport);
 size_t flow_tcp_queued(const struct flow_tcp *transport);
 uint64_t flow_tcp_dropped(const struct flow_tcp *transport);
+/* Match a transport-owned TCP connection (including recent reconnects). */
+bool flow_tcp_is_own_flow(const struct flow_tcp *transport, const struct flow_record *record);
 
 #endif
