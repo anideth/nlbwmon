@@ -5,7 +5,7 @@
 >
 > This branch contains unfinished, unverified changes to conntrack accounting and flow export. It may lose, duplicate, misattribute, or incorrectly count traffic and connection events. **Do not use it for security auditing, billing, compliance, or any other purpose requiring accurate or complete records.**
 >
-> The NEW/DESTROY lifecycle exporter is under active development. Paired events are best-effort, not guaranteed: kernel event loss, daemon restarts, queue overflow, TCP disconnections, and receiver failures can result in missing or duplicate records. The changes have not yet passed full build, integration, and long-running production tests.
+> The NEW/DESTROY lifecycle exporter is under active development. Paired events are best-effort, not guaranteed: kernel event loss, daemon restarts, queue overflow, TCP disconnections, and receiver failures can result in missing or duplicate records. Limited isolated lab tests have passed, including recovery after a Netlink receive overrun. End-to-end ingestion, long-running stability, and production safety remain unverified.
 >
 > **Use only in an isolated test environment unless you understand the risks.** Back up your OpenWrt configuration and accounting database, retain the original package and a tested rollback procedure. This is an unofficial fork, not an endorsed upstream or OpenWrt release.
 
@@ -13,6 +13,15 @@
 > **Unofficial fork of [jow-/nlbwmon](https://github.com/jow-/nlbwmon).** The original bandwidth accounting functionality remains the foundation of this project. The flow exporter is experimental, **disabled by default**, and is currently undergoing isolated OpenWrt lab validation. This is not an official OpenWrt package.
 
 This branch adds optional, per-connection flow records to nlbwmon's existing Linux conntrack accounting. It uses the daemon's existing netlink processing instead of running a second zero-on-read conntrack poller. Completed flows can be formatted as newline-delimited JSON (JSONL) and sent to a configured TCP collector.
+
+## Versioning and release status
+
+**Development status: pre-release; no official fork release or Git tag has been published yet.** The planned first tag is `v0.1.0-alpha.1`, to be created only after the release commit is finalized. Until then, use a specific Git commit to identify a build. The upstream OpenWrt package version is **not** the fork version.
+
+- This repository's default development branch is `feature/flow-lifecycle-events`; `master` is retained for upstream synchronization.
+- Proposed fork versions follow SemVer pre-release tags (`v0.1.0-alpha.1`, then later alpha versions as appropriate); these do not imply production readiness.
+- The wire schema `nlbwmon-flow-v1` is independent of the Git/release version.
+- See [CHANGELOG.md](CHANGELOG.md), [docs/VERSIONING.md](docs/VERSIONING.md), [docs/limitations.md](docs/limitations.md), and [lab validation](docs/lab-validation-2026-11-13.md).
 
 ## What this fork adds
 
@@ -64,8 +73,8 @@ A firmware upgrade with preserved configuration does **not** necessarily preserv
 
 - **Development branch:** `feature/flow-lifecycle-events`; keep the fork's `master` branch aligned with upstream.
 - **Build tested:** OpenWrt SDK 25.12.6, target `mediatek/filogic`, architecture `aarch64_cortex-a53`.
-- **Tests:** synthetic conntrack parser integration under QEMU and local transport/unit tests.
-- **Lab verified:** NEW JSONL events, idle reconnect, bounded queue overflow, and queued-line transfer after reconnect on an isolated OpenWrt test router. **Not yet verified:** complete end-to-end accounting accuracy, all NAT/IPv6 topologies, long-running stability, and upgrades from the stock package.
+- **Tests:** synthetic conntrack parser integration under QEMU, local transport/unit tests, and bounded x86-64 OpenWrt lab traffic tests.
+- **Lab verified:** NEW JSONL events, idle reconnect, bounded queue overflow, and queued-line transfer after reconnect on an isolated OpenWrt test router. **Lab recovery verified:** the event socket remained registered after 3,158 Netlink drops; 30 subsequent test flows produced matching NEW/DESTROY events without restarting the daemon. Dropped Netlink events were not recovered. **Not yet verified:** complete end-to-end accounting accuracy, all NAT/IPv6 topologies, long-running stability, and upgrades from the stock package.
 - **Binary packages:** publish only as clearly labeled prerelease assets after validating the package contents and deployment procedure. Do not assume an APK is portable across OpenWrt releases or architectures.
 
 ## Upstream
