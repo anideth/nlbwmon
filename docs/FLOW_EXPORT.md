@@ -39,7 +39,7 @@ The init script passes `-E`, `-M`, `-K`, `-F`, and, when both destination values
 
 ## JSONL format
 
-Each completed flow is a single JSON object followed by a newline. Schema identifier: `nlbwmon-flow-v1`.
+Each emitted lifecycle event is a single JSON object followed by a newline. Events may include NEW and DESTROY; NEW can have zero counters. Schema identifier: `nlbwmon-flow-v1`.
 
 Example using **documentation-only** IP addresses:
 
@@ -54,6 +54,9 @@ Example using **documentation-only** IP addresses:
 - `started_sec`, `finished_sec`: Unix timestamps in seconds.
 - `seen_new`: whether the tracker observed a NEW event for this flow.
 - `id`: conntrack identifier, **not** a globally unique persistent record ID.
+- `event_type`: lifecycle event type (for example, `NEW` or `DESTROY`).
+- `connection_id`: exporter-generated flow correlation identifier; do not assume it is durable across restarts.
+- `router_name`: configured router label; avoid sensitive hostnames in published examples.
 
 The TCP collector must handle arbitrary chunking: one `recv()` can contain a partial JSON line or several lines.
 
@@ -80,6 +83,8 @@ These tests do **not** prove correctness on a production router. Before enabling
 - Flow records contain IP addresses, ports, connection metadata and timestamps. Treat collected records as potentially sensitive; apply retention and access controls.
 - Counter-zero reads are shared state in the kernel. Running another independent zero-on-read conntrack poller can distort accounting.
 - Flow coverage depends on conntrack event delivery, marks, capacity, daemon lifetime and other kernel/runtime conditions.
+
+For precise delivery guarantees, tested behavior, security implications, and the proposed optional ACK mode, read [limitations.md](limitations.md). ACK and durable delivery are **not implemented**.
 
 ## Upstream contribution plan
 
