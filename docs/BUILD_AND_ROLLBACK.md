@@ -13,6 +13,17 @@ This is an **experimental** fork. It is not a production-ready or lossless flow-
 
 ## Build requirements
 
+### SDK downloads
+
+Download **OpenWrt 25.12.6 SDKs** (not ImageBuilder, not full firmware images) from the official OpenWrt downloads site, under `releases/25.12.6/targets/`:
+
+- `x86/64/` — `openwrt-sdk-25.12.6-x86-64_gcc-14.3.0_musl.Linux-x86_64.tar.zst` (lab x86-64 VM).
+- `mediatek/filogic/` — `openwrt-sdk-25.12.6-mediatek-filogic_gcc-14.3.0_musl.Linux-x86_64.tar.zst` (MediaTek Filogic, including ASUS TUF-AX4200).
+
+Check the exact filenames and SHA256 against the official download index and checksum file before extraction; do not assume a different release or target is interchangeable. Both SDKs are **Linux x86-64 host toolchains** and build different target architectures (`x86_64` and `aarch64_cortex-a53`). The current builder expects the extracted SDK directories under `~/projects/openwrt-sdk/` with their original directory names, plus the packages feed containing `net/nlbwmon`. Configure the SDK to build `CONFIG_PACKAGE_nlbwmon=m`, and ensure its dependencies are available. These paths are defaults of the provided local builder, not general OpenWrt requirements.
+
+Official download root: https://downloads.openwrt.org/releases/25.12.6/targets/
+
 Use an OpenWrt 25.12.6 SDK with the `packages` feed installed and `CONFIG_PACKAGE_nlbwmon=m` enabled. Supported local SDK targets are `x86-64` and `mediatek-filogic`. The provided script uses the existing local SDK layout under `~/projects/openwrt-sdk`; adjust the script for other layouts. The source checkout must be on `feature/flow-lifecycle-events` and have no tracked uncommitted changes.
 
 ```sh
