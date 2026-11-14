@@ -8,7 +8,7 @@
 - **Source release:** SemVer prerelease tag, starting with proposed `v0.1.0-alpha.1`.
 - **Development state:** the current default branch is `feature/flow-lifecycle-events`; until a tag is published, identify builds by full Git commit SHA.
 - **Wire format:** `nlbwmon-flow-v1` is a separate schema identifier and does not change with every source release.
-- **OpenWrt APK:** upstream package recipe version/revision and architecture are distinct from the fork's source version. Never infer fork contents from an upstream-looking APK filename.
+- **OpenWrt APK:** fork package version is `0.1.0_alpha1-r1` (candidate), declared in `openwrt/fork-version.mk`; the official OpenWrt feed currently uses `2025.06.02~29236be6-r1`. Both packages retain the name `nlbwmon`. The fork's version must be applied to the SDK package recipe **before** building; merely adding this file does not change SDK outputs. Verify the built APK metadata and filename for every architecture.
 
 ## Release procedure
 
@@ -16,7 +16,7 @@
 2. Create an annotated Git tag on that commit and push it; do not move published tags.
 3. Create a GitHub Release from the tag and mark every alpha/beta release as **Pre-release**.
 4. Include known limitations, tested platforms, commit SHA, changes, and rollback guidance.
-5. Only attach binary packages when their build provenance, OpenWrt version, target, architecture, and configuration are verified. Do not claim a universal APK.
+5. Only attach binary packages when their build provenance, OpenWrt version, target, architecture, and configuration are verified. Do not claim a universal APK.\n6. Before installing, save the active `/etc/config/nlbwmon`, accounting database and installed package identity. Validate official repository availability and a tested explicit-version rollback on the same OpenWrt target. The official init script ignores the fork-only `flow_export` section; preserve it across rollback, and do not overwrite current accounting data with an old backup during a normal rollback.\n7. Never publish a GitHub Release or APK until actual build, install, and rollback tests have passed.
 
 ## Planned milestones
 
