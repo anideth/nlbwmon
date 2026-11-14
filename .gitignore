@@ -7,3 +7,6 @@
 *.o
 *.swp
 *.swo
+
+# Local deployment destinations and secrets
+/deploy-nlbwmon.local.conf
