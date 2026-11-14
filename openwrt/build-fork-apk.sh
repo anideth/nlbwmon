@@ -31,7 +31,7 @@ s=s.replace('include $(TOPDIR)/rules.mk\n', 'include $(TOPDIR)/rules.mk\nUSE_SOU
 s=s.replace('PKG_NAME:=nlbwmon\n', 'PKG_NAME:=nlbwmon\nPKG_VERSION:='+version+'\n', 1)
 p.write_text(s)
 PY
-for name in nlbwmon.init nlbwmon.config nlbwmon.hotplug; do
+for name in nlbwmon.init nlbwmon.config; do
   [[ -f "$ROOT/openwrt/files/$name" ]] || { echo "Missing $name" >&2; exit 1; }
   cp "$ROOT/openwrt/files/$name" "$SDK/feeds/packages/net/nlbwmon/files/$name"
 done
