@@ -23,6 +23,8 @@ This branch adds optional, per-connection flow records to nlbwmon's existing Lin
 - The wire schema `nlbwmon-flow-v1` is independent of the Git/release version.
 - See [CHANGELOG.md](CHANGELOG.md), [docs/VERSIONING.md](docs/VERSIONING.md), [docs/limitations.md](docs/limitations.md), and [lab validation](docs/lab-validation-2026-11-13.md).
 
+For the reproducible dual-target OpenWrt APK build, fork package identity, installation precautions, and rollback test requirements, see [Building and rollback](docs/BUILD_AND_ROLLBACK.md). The alpha package version is `0.1.0_alpha1-r1` and is distinct from the official OpenWrt package version. **No binary release or tested automatic rollback is available yet.**
+
 ## What this fork adds
 
 - Flow tracking using conntrack NEW, periodic counter snapshots (GET_CTRZERO), and DESTROY events.
