@@ -111,12 +111,13 @@ if [[ $MODE == deploy ]]; then
   REMOTE_SHA=$(remote "sha256sum '$REMOTE_APK'" | awk '{print $1}')
   [[ $LOCAL_SHA == "$REMOTE_SHA" ]] || fail 'Transferred APK checksum mismatch; service unchanged'
 else
-  # apk fetch downloads the exact stock version into /tmp; never trust the default upgrade candidate.
-  remote "set -eu; mkdir -p /tmp/nlbwmon-stock-$$; apk fetch --output /tmp/nlbwmon-stock-$$ 'nlbwmon=$STOCK_VERSION'" || fail 'Official package fetch failed. Service unchanged.'
-  remote "set -eu; find /tmp/nlbwmon-stock-$$ -maxdepth 1 -type f -name 'nlbwmon-*.apk' -exec cp {} '$REMOTE_APK' \; && test -s '$REMOTE_APK'" || fail 'Official package not found after fetch. Service unchanged.'
+  # Fetch repository candidate, then verify exact version and architecture before installing.
+  STOCK_DIR="/tmp/nlbwmon-stock-$$"
+  remote "set -eu; mkdir -p '$STOCK_DIR'; apk fetch --from repositories --output '$STOCK_DIR' nlbwmon" || fail 'Official package fetch failed. Service unchanged.'
+  remote "set -eu; candidate='$STOCK_DIR/nlbwmon-$STOCK_VERSION.apk'; test -f \"\$candidate\"; meta=\$(apk adbdump \"\$candidate\"); printf '%s\\n' \"\$meta\" | grep -Fx '  name: nlbwmon' >/dev/null; printf '%s\\n' \"\$meta\" | grep -Fx '  version: $STOCK_VERSION' >/dev/null; printf '%s\\n' \"\$meta\" | grep -Fx '  arch: $RELEASE_ARCH' >/dev/null; cp \"\$candidate\" '$REMOTE_APK'; test -s '$REMOTE_APK'" || fail 'Official package identity check failed. Service unchanged.'
 fi
 
-if ! remote "set -eu; /etc/init.d/nlbwmon stop; if ! apk add --allow-untrusted --allow-downgrade --force-reinstall '$REMOTE_APK'; then /etc/init.d/nlbwmon start || true; exit 1; fi; /etc/init.d/nlbwmon start; /etc/init.d/nlbwmon status; nlbw -c csv >/dev/null"; then
+if ! remote "set -eu; /etc/init.d/nlbwmon stop; if ! apk add --allow-untrusted --force-reinstall '$REMOTE_APK'; then /etc/init.d/nlbwmon start || true; exit 1; fi; /etc/init.d/nlbwmon start; /etc/init.d/nlbwmon status; nlbw -c csv >/dev/null"; then
   printf '%s FAILED. Inspect device; no automatic rollback. Backup: %s\n' "$MODE" "$BACKUP_DIR" >&2
   exit 1
 fi
