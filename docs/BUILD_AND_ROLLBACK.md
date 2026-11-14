@@ -36,9 +36,9 @@ The script archives committed Git source, stages it in `~/projects/nlbwmon-build
 
 The SDK feed's `nlbwmon.hotplug` remains from the official feed. The fork config's `flow_export` section is disabled by default. The third-party Prometheus Lua collector is **not** bundled in the APK.
 
-## Installation and rollback: not yet validated
+## Interactive deploy and rollback (not yet validated)
 
-**Do not install on the production router until the x86 lab has completed a real install and rollback test.** The build script is not an installer.
+**Do not install on the production router until the x86 lab has completed a real install and rollback test.** The build script is not an installer.\n\nCopy `deploy-nlbwmon.conf.example` to `deploy-nlbwmon.local.conf`, edit your SSH destinations and keep the local file out of Git (it is ignored). Run `bash deploy-nlbwmon.sh` for the interactive menu. The script provides read-only check, alpha deploy and explicit official-repository rollback. It checks the remote OpenWrt release, target and architecture, makes a local backup of the router's current config/database, checks SHA256 on uploaded alpha packages, stops and restarts the service and verifies that the config checksum did not change. Rollback prompts for the exact official package version and attempts to fetch that package from the device's configured APK repositories **before** stopping the service. This behavior is code only: the actual `apk fetch`, downgrade flags and UCI preservation remain untested on OpenWrt 25.12.6.\n\n**Safety:** The script does not automatically restore a backup or roll back a failed install. It must first be tested on a Proxmox snapshot of the lab VM. The private local config must never be included in the release.\n
 
 Before installation, inspect the target's OpenWrt version, target and architecture, confirm official `nlbwmon` availability in its configured APK repositories, and back up the live `/etc/config/nlbwmon`, database directory and installed package metadata. Package manager handling of configuration files must be tested: including a config template in the APK does not guarantee that a new `flow_export` section appears in an existing user configuration. Do not overwrite user settings.
 
