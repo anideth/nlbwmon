@@ -113,7 +113,7 @@ if [[ $MODE == deploy ]]; then
 else
   # apk fetch downloads the exact stock version into /tmp; never trust the default upgrade candidate.
   remote "set -eu; mkdir -p /tmp/nlbwmon-stock-$$; apk fetch --output /tmp/nlbwmon-stock-$$ 'nlbwmon=$STOCK_VERSION'" || fail 'Official package fetch failed. Service unchanged.'
-  remote "set -eu; find /tmp/nlbwmon-stock-$$ -maxdepth 1 -type f -name 'nlbwmon-*.apk' -exec cp {} '$REMOTE_APK' \; ; test -s '$REMOTE_APK'" || fail 'Official package not found after fetch. Service unchanged.'
+  remote "set -eu; find /tmp/nlbwmon-stock-$$ -maxdepth 1 -type f -name 'nlbwmon-*.apk' -exec cp {} '$REMOTE_APK' \; && test -s '$REMOTE_APK'" || fail 'Official package not found after fetch. Service unchanged.'
 fi
 
 if ! remote "set -eu; /etc/init.d/nlbwmon stop; if ! apk add --allow-untrusted --allow-downgrade --force-reinstall '$REMOTE_APK'; then /etc/init.d/nlbwmon start || true; exit 1; fi; /etc/init.d/nlbwmon start; /etc/init.d/nlbwmon status; nlbw -c csv >/dev/null"; then
