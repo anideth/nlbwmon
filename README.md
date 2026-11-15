@@ -1,5 +1,8 @@
 # nlbwmon — experimental conntrack flow export fork
 
+> **Release preparation (2026-11-15):** See [beta release checklist, RAM sizing, conntrack mark policy and third-party credits](docs/BETA_RELEASE_CHECKLIST.md). The configured 524288-byte Netlink buffer is **512 KiB, not a 512 MiB router RAM requirement**. No beta Git tag or binary release has been published; this is still experimental.
+
+
 > [!CAUTION]
 > **EXPERIMENTAL DEVELOPMENT FORK — NOT PRODUCTION READY.**
 >
