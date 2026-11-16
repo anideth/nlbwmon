@@ -2,6 +2,10 @@
 
 This optional dashboard is **not part of the nlbwmon APK**. It visualizes OpenWrt node-exporter Lua metrics and, in three panels, traffic statistics from the **external** nlbwmon Prometheus collector. It does not visualize the new conntrack flow JSON events directly.
 
+## Traffic dashboard preview
+
+The locally prepared screenshot covers four customized panels: **WAN Traffic (RX / TX)**, **Network Traffic by Device (RX / TX)**, **Top Download by Device**, and **Top Upload by Device**. It was captured in Grafana with device names blurred. The PNG is awaiting upload to `grafana/screenshots/traffic-overview.png`; do not treat the placeholder path as a published asset yet.
+
 ## Attribution and license
 
 Based on [OpenWRT dashboard #11147](https://grafana.com/grafana/dashboards/11147/) from [try2codesecure/grafana_dashboards](https://github.com/try2codesecure/grafana_dashboards/tree/master/OpenWRT), originally distributed under the MIT license. Original license and copyright notice are preserved in [LICENSE-MIT](LICENSE-MIT). This is an independently modified dashboard, not an official upstream release or endorsement. Changes were made in Grafana's web editor over time and exported for beta distribution.
