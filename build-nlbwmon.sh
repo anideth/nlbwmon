@@ -4,7 +4,7 @@ set -Eeuo pipefail
 OPENWRT_VERSION="25.12.6"
 SDK_TOOLCHAIN="gcc-14.3.0_musl.Linux-x86_64"
 SDK_BASE="$HOME/projects/openwrt-sdk"
-SOURCE_DIR="$HOME/projects/nlbwmon"
+SOURCE_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 SOURCE_STAGE_DIR="$HOME/projects/nlbwmon-build-src"
 ALLOWED_BRANCHES=("feature/flow-lifecycle-events" "release/beta-preparation" "integration/upstream-update")
 OUTPUT_BASE="$HOME/projects/openwrt-packages/$OPENWRT_VERSION"
@@ -37,7 +37,7 @@ FEED_DIR="$SDK_DIR/feeds/packages/net/nlbwmon"
 FEED_MAKEFILE="$FEED_DIR/Makefile"
 VERSION_FILE="$SOURCE_DIR/openwrt/fork-version.mk"
 [[ -d "$SDK_DIR" && -f "$SDK_DIR/.config" ]] || fail "SDK missing or not configured: $SDK_DIR"
-[[ -d "$SOURCE_DIR/.git" ]] || fail "Git source directory missing: $SOURCE_DIR"
+git -C "$SOURCE_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1 || fail "Git source directory missing: $SOURCE_DIR"
 [[ -f "$SOURCE_DIR/flow_json.c" && -f "$SOURCE_DIR/CMakeLists.txt" ]] || fail "Expected source files missing"
 CURRENT_BRANCH="$(git -C "$SOURCE_DIR" branch --show-current)"
 BRANCH_ALLOWED=0
