@@ -48,11 +48,11 @@ git switch release/beta-preparation
 git pull --ff-only origin release/beta-preparation
 git status --short
 git branch backup/pre-upstream-$(date +%Y%m%d) release/beta-preparation
-git switch -c integration/upstream-$(date +%Y%m%d) release/beta-preparation
+git switch -c integration/upstream-update release/beta-preparation
 git merge --no-ff --no-commit upstream/master
 ```
 
-The dated branch names must not already exist. If a command reports an error, **stop**, do not skip it. `--no-commit` lets us inspect the merge before creating a commit. No remote branches are pushed by these commands.
+The backup date and `integration/upstream-update` branch names must not already exist. If a command reports an error, **stop**, do not skip it. `--no-commit` lets us inspect the merge before creating a commit. No remote branches are pushed by these commands.
 
 ### If Git reports conflicts
 
@@ -93,7 +93,7 @@ If Git says "Already up to date", there is no merge to commit; stop here and rev
 
 ## 4. Build and validate in the lab
 
-The existing `build-nlbwmon.sh` only permits explicit branch names (`feature/flow-lifecycle-events`, `release/beta-preparation`, `integration/upstream-update`). To build a dated integration branch, first create/use the permitted name `integration/upstream-update` **instead of** `integration/upstream-YYYYMMDD` in section 3; the name must not already exist. This restriction is deliberate: the builder archives committed source and refuses dirty trees.
+The existing `build-nlbwmon.sh` only permits explicit branch names (`feature/flow-lifecycle-events`, `release/beta-preparation`, `integration/upstream-update`). The integration branch created in section 3 uses the allowed name. This restriction is deliberate: the builder archives committed source and refuses dirty trees.
 
 On the integration branch after a successful commit:
 
