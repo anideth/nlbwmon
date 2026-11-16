@@ -21,6 +21,21 @@
 This branch adds optional, per-connection flow records to nlbwmon's existing Linux conntrack accounting. It uses the daemon's existing netlink processing instead of running a second zero-on-read conntrack poller. Completed flows can be formatted as newline-delimited JSON (JSONL) and sent to a configured TCP collector.
 
 
+## Why this fork exists
+
+This is an **unofficial, experimental fork** of [nlbwmon by Jo-Philipp Wich](https://github.com/jow-/nlbwmon). It began with a practical OpenWrt monitoring problem: the existing setup needed both dependable traffic accounting and detailed connection records for OpenSearch. In the original multi-consumer approach, counter reads/resets and independent conntrack processing made it difficult to correlate totals with individual flows consistently. The fork extends the existing nlbwmon collection path so that traffic accounting and conntrack lifecycle telemetry can be produced together, instead of adding a second competing collector. This is the project's motivation, **not** a guarantee of lossless counters or events.
+
+The existing nlbwmon accounting remains available. An optional lifecycle export sends NEW and DESTROY events to the separate [Python collector](https://github.com/anideth/nlbwmon-aggregator), which builds per-connection documents in OpenSearch. Intermediate UPDATE events and periodic per-flow counter snapshots are not exported. See [lifecycle semantics](https://github.com/anideth/nlbwmon-aggregator/blob/release/beta-preparation/docs/LIFECYCLE_SETUP.md) and [flow export configuration](docs/FLOW_EXPORT.md).
+
+## Maintainer, AI assistance and project maturity
+
+I am a DevOps/infrastructure engineer with approximately **20 years of professional experience** in Linux, networking and operations, but limited hands-on software development experience, especially with C. This fork has been developed with substantial assistance from AI coding tools (often called *vibe coding*). I am the sole maintainer; design decisions, integration, deployment and load/extended-running tests have been performed in my own homelab, without independent peer review.
+
+**Status: experimental / beta preparation.** This is a personal homelab project, not a production-hardened distribution. Testing so far covers a limited set of OpenWrt releases, hardware and network scenarios. Netlink overrun, TCP disconnects and queue pressure can still lose lifecycle events; memory requirements, extreme-load behavior and all NAT scenarios have not been independently validated. A missed DESTROY can leave an OpenSearch document `active` indefinitely (until index retention); no automatic seven-day stale expiry exists yet.
+
+Use primarily for **homelab, learning and experimentation**. Production or security-critical deployment requires your own validation, backups, rollback plan and security review. The original nlbwmon authorship and ISC license remain credited in [COPYING](COPYING); this fork does not claim ownership of upstream work.
+
+
 ## Lifecycle events and collector semantics
 
 The fork exports **NEW** and **DESTROY** connection lifecycle events; it does **not** export intermediate conntrack UPDATE snapshots or periodic flow-counter deltas. The [companion Python collector](https://github.com/anideth/nlbwmon-aggregator) creates an OpenSearch document with `flow.status=active` on NEW and uses a Painless scripted upsert to update the **same document** to `flow.status=closed` with final byte/packet counters and duration on DESTROY. If NEW was missed, DESTROY can still create a closed document. Optional asynchronous PTR updates are separate. If DESTROY is lost, the document remains active indefinitely, subject to index retention: **no automatic seven-day stale timeout is implemented in the current beta**.
