@@ -4,7 +4,7 @@ This optional dashboard is **not part of the nlbwmon APK**. It visualizes OpenWr
 
 ## Traffic dashboard preview
 
-The locally prepared screenshot covers four customized panels: **WAN Traffic (RX / TX)**, **Network Traffic by Device (RX / TX)**, **Top Download by Device**, and **Top Upload by Device**. It was captured in Grafana with device names blurred. The screenshot is intended for `grafana/screenshots/traffic-overview.png` (binary upload pending).
+The locally prepared screenshot covers four customized panels: **WAN Traffic (RX / TX)**, **Network Traffic by Device (RX / TX)**, **Top Download by Device**, and **Top Upload by Device**. It was captured in Grafana with device names blurred. The screenshot below is included in this repository at `grafana/screenshots/traffic-overview.png`.
 
 ![OpenWrt Grafana traffic overview](screenshots/traffic-overview.png)
 
