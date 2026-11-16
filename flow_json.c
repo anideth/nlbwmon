@@ -24,6 +24,9 @@ int flow_json_format_event(const struct flow_record *record, const char *event_t
     char os[INET6_ADDRSTRLEN], od[INET6_ADDRSTRLEN];
     char rs[INET6_ADDRSTRLEN], rd[INET6_ADDRSTRLEN];
     int n;
+    static uint64_t event_sequence;
+    const struct timespec *event_time;
+    uint64_t event_time_ms;
 
     if (!record || !buffer || !size || !event_type || !boot_id || !router_name ||
         (strcmp(event_type, "NEW") && strcmp(event_type, "DESTROY")))
@@ -35,6 +38,11 @@ int flow_json_format_event(const struct flow_record *record, const char *event_t
         format_address(&record->reply, &record->reply.dst, rd, sizeof(rd)))
         return -EINVAL;
 
+    event_time = strcmp(event_type, "NEW") == 0 ? &record->started : &record->finished;
+    if (event_time->tv_sec < 0 || event_time->tv_nsec < 0 || event_time->tv_nsec >= 1000000000L)
+        return -EINVAL;
+    event_time_ms = (uint64_t)event_time->tv_sec * 1000U + (uint64_t)event_time->tv_nsec / 1000000U;
+
     n = snprintf(buffer, size,
         "{\"schema\":\"nlbwmon-flow-v1\",\"router_name\":\"%s\",\"event_type\":\"%s\",\"connection_id\":\"%s-%" PRIu32 "-%" PRIdMAX "-%ld\",\"id\":%" PRIu32 ",\"mark\":%" PRIu32
         ",\"family\":%u,\"protocol\":%u,\"orig_src\":\"%s\",\"orig_dst\":\"%s\""
@@ -42,7 +50,7 @@ int flow_json_format_event(const struct flow_record *record, const char *event_t
         ",\"reply_sport\":%u,\"reply_dport\":%u,\"orig_packets\":%" PRIu64
         ",\"orig_bytes\":%" PRIu64 ",\"reply_packets\":%" PRIu64
         ",\"reply_bytes\":%" PRIu64 ",\"started_sec\":%" PRIdMAX
-        ",\"finished_sec\":%" PRIdMAX ",\"seen_new\":%s}\n",
+        ",\"finished_sec\":%" PRIdMAX ",\"event_time_ms\":%" PRIu64 ",\"event_seq\":%" PRIu64 ",\"seen_new\":%s}\n",
         router_name, event_type, boot_id, record->id, (intmax_t)record->started.tv_sec,
         record->started.tv_nsec, record->id, record->mark, (unsigned)record->original.family,
         (unsigned)record->original.protocol, os, od,
@@ -50,12 +58,14 @@ int flow_json_format_event(const struct flow_record *record, const char *event_t
         rs, rd, (unsigned)ntohs(record->reply.sport), (unsigned)ntohs(record->reply.dport),
         record->orig_packets, record->orig_bytes, record->reply_packets,
         record->reply_bytes, (intmax_t)record->started.tv_sec,
-        (intmax_t)record->finished.tv_sec, record->seen_new ? "true" : "false");
+        (intmax_t)record->finished.tv_sec, event_time_ms, event_sequence + 1,
+        record->seen_new ? "true" : "false");
 
     if (n < 0)
         return -EIO;
     if ((size_t)n >= size)
         return -ENOSPC;
+    event_sequence++;
     return n;
 }
 
