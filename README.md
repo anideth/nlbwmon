@@ -11,7 +11,7 @@
 >
 > This branch contains unfinished, unverified changes to conntrack accounting and flow export. It may lose, duplicate, misattribute, or incorrectly count traffic and connection events. **Do not use it for security auditing, billing, compliance, or any other purpose requiring accurate or complete records.**
 >
-> The NEW/DESTROY lifecycle exporter is under active development. Paired events are best-effort, not guaranteed: kernel event loss, daemon restarts, queue overflow, TCP disconnections, and receiver failures can result in missing or duplicate records. Limited isolated lab tests have passed, including recovery after a Netlink receive overrun. End-to-end ingestion, long-running stability, and production safety remain unverified.
+> The NEW/DESTROY lifecycle exporter is under active development. Paired events are best-effort, not guaranteed: kernel event loss, daemon restarts, queue overflow, TCP disconnections, and receiver failures can result in missing or duplicate records. Limited isolated lab tests have passed, including recovery after a Netlink receive overrun. A limited x86-64 lab test on 2026-11-16 observed NEW documents becoming closed after DESTROY in OpenSearch following a same-version APK reinstall, with final byte/packet counters. This is not proof of lossless delivery, complete accounting accuracy, long-running stability, or production safety.
 >
 > **Use only in an isolated test environment unless you understand the risks.** Back up your OpenWrt configuration and accounting database, retain the original package and a tested rollback procedure. This is an unofficial fork, not an endorsed upstream or OpenWrt release.
 
@@ -119,9 +119,9 @@ A firmware upgrade with preserved configuration does **not** necessarily preserv
 ## Status and compatibility
 
 - **Development branch:** `feature/flow-lifecycle-events`; keep the fork's `master` branch aligned with upstream.
-- **Build tested:** OpenWrt SDK 25.12.6, target `mediatek/filogic`, architecture `aarch64_cortex-a53`.
+- **Build tested:** OpenWrt SDK 25.12.6 for `x86/64` (`x86_64`) and `mediatek/filogic` (`aarch64_cortex-a53`); SHA256 checks passed for both artifacts from commit `07239d1f954fba86e187f9e15355e37c9542f2e4`. The Filogic APK from that commit has not been device-installed.
 - **Tests:** synthetic conntrack parser integration under QEMU, local transport/unit tests, and bounded x86-64 OpenWrt lab traffic tests.
-- **Lab verified:** NEW JSONL events, idle reconnect, bounded queue overflow, and queued-line transfer after reconnect on an isolated OpenWrt test router. **Lab recovery verified:** the event socket remained registered after 3,158 Netlink drops; 30 subsequent test flows produced matching NEW/DESTROY events without restarting the daemon. Dropped Netlink events were not recovered. **Not yet verified:** complete end-to-end accounting accuracy, all NAT/IPv6 topologies, long-running stability, and upgrades from the stock package.
+- **Lab verified:** On 2026-11-16 the x86-64 APK from commit `07239d1f954fba86e187f9e15355e37c9542f2e4` was reinstalled on an OpenWrt 25.12.6 lab VM, with UCI unchanged and the service running; the operator observed metrics and OpenSearch NEW/DESTROY lifecycle document updates. Earlier tests covered NEW JSONL events, idle reconnect, bounded queue overflow, and queued-line transfer after reconnect on an isolated OpenWrt test router. **Lab recovery verified:** the event socket remained registered after 3,158 Netlink drops; 30 subsequent test flows produced matching NEW/DESTROY events without restarting the daemon. Dropped Netlink events were not recovered. **Not yet verified:** complete end-to-end accounting accuracy, all NAT/IPv6 topologies, long-running stability, and upgrades from the stock package.
 - **Binary packages:** publish only as clearly labeled prerelease assets after validating the package contents and deployment procedure. Do not assume an APK is portable across OpenWrt releases or architectures.
 
 ## Upstream
