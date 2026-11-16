@@ -21,7 +21,7 @@ bash build-nlbwmon.sh --target x86-64
 bash build-nlbwmon.sh --target filogic
 ```
 
-Build scripts do not change the router. Never promise automatic rollback: the interactive deploy helper does not implement it and must be validated against a lab snapshot before general release.
+For future upstream releases, use the reviewed [upstream synchronization procedure](UPSTREAM_SYNC.md); Git merge success is not a substitute for lab validation. Build scripts do not change the router. Never promise automatic rollback: the interactive deploy helper does not implement it and must be validated against a lab snapshot before general release.
 
 ## Mark/mask: where marks come from
 
