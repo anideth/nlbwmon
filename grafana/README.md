@@ -12,7 +12,9 @@ The Prometheus Lua collector is **separate third-party software**: [giuliomagnif
 
 The cleaned Grafana Dashboard v2 JSON is being prepared as `openwrt-nlbwmon.json`. **It has not been committed yet**: the exported file needs an actual import test before publication. The working export uses `apiVersion: dashboard.grafana.app/v2` and is not interchangeable with every classic Grafana JSON import route.
 
-The local sanitized copy replaces 125 occurrences of a site-specific Prometheus datasource UID with `REPLACE_WITH_PROMETHEUS_DATASOURCE_UID`, clears saved `job`, `name`, and `node` selections, and keeps all 69 panels and their PromQL expressions. Before importing, replace the placeholder with your target Prometheus datasource UID and choose the desired job/host in Grafana. No production Grafana or router configuration is changed by these preparations.
+The reviewed local distribution copy replaces 125 occurrences of a site-specific Prometheus datasource UID with `REPLACE_WITH_PROMETHEUS_DATASOURCE_UID`, clears saved `job`, `name`, and `node` selections, and keeps all 69 panels and their PromQL expressions. Before importing, replace the placeholder with your target Prometheus datasource UID and choose the desired job/host in Grafana. No production Grafana or router configuration is changed by these preparations.
+
+The reviewed local JSON adds a `$wan_device` query variable based on `node_network_receive_bytes_total`, and both WAN Traffic queries use `device=~"$wan_device"` instead of the fixed `device="pppoe-wan"`. Select the actual WAN interface in Grafana after importing; the query relies on the selected node exporting `node_network_receive_bytes_total` with a `device` label. The device traffic panels remain unchanged. Note that a physical WAN interface and PPPoE logical interface may report different byte counts.
 
 The dashboard uses OpenWrt node-exporter Lua metrics and optional nlbwmon metrics; missing collectors will yield empty panels. It does not require or configure the Python flow aggregator.
 
@@ -21,6 +23,7 @@ The dashboard uses OpenWrt node-exporter Lua metrics and optional nlbwmon metric
 - [x] Establish original source and MIT attribution.
 - [x] Scan exported JSON for literal IPv4 addresses, URLs, common hostnames, and credential markers.
 - [x] Remove saved site-specific variable values and datasource UID in the local distribution copy.
+- [x] Review the four WAN/device traffic panels for site-specific host and interface filters.
 - [ ] Test import into a separate Grafana instance, including datasource mapping and variable refresh.
 - [ ] Commit sanitized dashboard JSON only after the import test.
 - [ ] Confirm license attribution in any public release notes.
