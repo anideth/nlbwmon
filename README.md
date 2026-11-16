@@ -96,11 +96,7 @@ The optional [OpenWrt Grafana dashboard](grafana/README.md) extends [try2codesec
 <details>
 <summary>📊 Grafana traffic dashboard preview</summary>
 
-The screenshot is ready but **not yet uploaded** to this branch. Once `grafana/screenshots/traffic-overview.png` is committed, it will be displayed here.
-
-<!-- After PNG upload, replace this comment with:
 ![OpenWrt Grafana WAN and per-device traffic dashboard](grafana/screenshots/traffic-overview.png)
--->
 
 </details>
 
