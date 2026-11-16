@@ -20,6 +20,13 @@
 
 This branch adds optional, per-connection flow records to nlbwmon's existing Linux conntrack accounting. It uses the daemon's existing netlink processing instead of running a second zero-on-read conntrack poller. Completed flows can be formatted as newline-delimited JSON (JSONL) and sent to a configured TCP collector.
 
+
+## Lifecycle events and collector semantics
+
+The fork exports **NEW** and **DESTROY** connection lifecycle events; it does **not** export intermediate conntrack UPDATE snapshots or periodic flow-counter deltas. The [companion Python collector](https://github.com/anideth/nlbwmon-aggregator) creates an OpenSearch document with `flow.status=active` on NEW and uses a Painless scripted upsert to update the **same document** to `flow.status=closed` with final byte/packet counters and duration on DESTROY. If NEW was missed, DESTROY can still create a closed document. Optional asynchronous PTR updates are separate. If DESTROY is lost, the document remains active indefinitely, subject to index retention: **no automatic seven-day stale timeout is implemented in the current beta**.
+
+The Python collector uses SQLite WAL/`synchronous=FULL` as a durable **post-receipt outbox** for lifecycle events and PTR jobs, not as a continuously updated table of active connections. OpenSearch [Update Document API with scripted upsert](https://docs.opensearch.org/latest/api-reference/document-apis/update-document/) is documented from **OpenSearch 1.0**, with `_source` enabled and Painless scripts permitted; full compatibility across OpenSearch versions has not been verified. A configurable seven-day `stale` status and optional CIDR exclusions are **next-release proposals**, not available beta features. Full details: [collector lifecycle documentation](https://github.com/anideth/nlbwmon-aggregator/blob/release/beta-preparation/docs/LIFECYCLE_SETUP.md).
+
 ## Versioning and release status
 
 **Development status: pre-release; no official fork release or Git tag has been published yet.** The planned first tag is `v0.1.0-alpha.1`, to be created only after the release commit is finalized. Until then, use a specific Git commit to identify a build. The upstream OpenWrt package version is **not** the fork version.
