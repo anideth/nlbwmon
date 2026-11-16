@@ -1,5 +1,8 @@
 # nlbwmon — experimental conntrack flow export fork
 
+> **Lifecycle flow beta documentation:** This unofficial OpenWrt fork sends conntrack NEW/DESTROY JSONL events to the independent [Python lifecycle collector](https://github.com/anideth/nlbwmon-aggregator). Read the [end-to-end installation guide](https://github.com/anideth/nlbwmon-aggregator/blob/feature/async-ptr-enrichment/docs/INSTALLATION_END_TO_END.md) and [OpenWrt build/rollback instructions](docs/BUILD_AND_ROLLBACK.md) before enabling export. The Python repository is currently **private**, so its documentation link requires authorized GitHub access until publication. The independent [Lua/Prometheus collector](docs/PROMETHEUS_AND_BACKUP.md) is not bundled. **Beta release not yet published.**
+
+
 > **Release preparation (2026-11-15):** See [beta release checklist, RAM sizing, conntrack mark policy and third-party credits](docs/BETA_RELEASE_CHECKLIST.md). The configured 524288-byte Netlink buffer is **512 KiB, not a 512 MiB router RAM requirement**. No beta Git tag or binary release has been published; this is still experimental.
 
 
