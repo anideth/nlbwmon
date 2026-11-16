@@ -93,7 +93,18 @@ See [docs/FLOW_EXPORT.md](docs/FLOW_EXPORT.md) for configuration and protocol de
 
 The optional [OpenWrt Grafana dashboard](grafana/README.md) extends [try2codesecure's OpenWRT dashboard #11147](https://grafana.com/grafana/dashboards/11147/) with WAN RX/TX, per-device network traffic and top download/upload views. It uses Prometheus metrics from OpenWrt and the separate [third-party nlbwmon Lua collector](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector); **it does not display conntrack lifecycle flow records** and is not included in the APK.
 
-A screenshot of the four traffic panels is prepared for `grafana/screenshots/traffic-overview.png`. The image and importable dashboard JSON are **not yet committed**, pending binary upload and a Grafana 13 import test. See [dashboard setup, attribution and release status](grafana/README.md).
+<details>
+<summary>📊 Grafana traffic dashboard preview</summary>
+
+The screenshot is ready but **not yet uploaded** to this branch. Once `grafana/screenshots/traffic-overview.png` is committed, it will be displayed here.
+
+<!-- After PNG upload, replace this comment with:
+![OpenWrt Grafana WAN and per-device traffic dashboard](grafana/screenshots/traffic-overview.png)
+-->
+
+</details>
+
+See [dashboard setup, attribution and release status](grafana/README.md). The importable JSON is also pending a Grafana 13 import test.
 
 ## Prometheus per-device traffic monitoring (optional)
 
