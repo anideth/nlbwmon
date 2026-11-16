@@ -119,7 +119,7 @@ APK_TOOL="$SDK_DIR/staging_dir/host/bin/apk"
 grep -Fq "$EXPECTED_PKG_VERSION" "$TEMP/apk-metadata.txt" || fail "Fork version not found in APK metadata"
 grep -Fq "$BUILD_TARGET" "$TEMP/apk-metadata.txt" || fail "Target architecture not found in APK metadata"
 cp -v -- "$APK" "$OUTPUT_DIR/"
-sha256sum "$OUTPUT_DIR/$(basename "$APK")" | tee "$OUTPUT_DIR/$(basename "$APK").sha256"
+(cd "$OUTPUT_DIR" && sha256sum "$(basename "$APK")" | tee "$(basename "$APK").sha256")
 printf 'Git commit: %s\nOpenWrt: %s\nTarget: %s\nPackage: %s\n' "$REV" "$OPENWRT_VERSION" "$SDK_TARGET" "$EXPECTED_PKG_VERSION" > "$OUTPUT_DIR/$(basename "$APK").buildinfo"
 echo "SUCCESS: $APK -> $OUTPUT_DIR"
 echo "No router was modified. Verify installation and rollback in the lab before release."
