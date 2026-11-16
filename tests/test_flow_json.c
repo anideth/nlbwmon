@@ -26,6 +26,8 @@ int main(void)
     r.reply_bytes = 999;
     r.started.tv_sec = 100;
     r.finished.tv_sec = 200;
+    r.started.tv_nsec = 123456789;
+    r.finished.tv_nsec = 987654321;
     r.seen_new = true;
     assert(inet_pton(AF_INET, "192.0.2.10", &r.original.src.s6_addr[0]) == 1);
     assert(inet_pton(AF_INET, "198.51.100.20", &r.original.dst.s6_addr[0]) == 1);
@@ -42,6 +44,8 @@ int main(void)
     assert(strstr(json, "\"reply_sport\":443"));
     assert(strstr(json, "\"reply_dport\":12345"));
     assert(strstr(json, "\"seen_new\":true"));
+    assert(strstr(json, "\"event_time_ms\":200987"));
+    assert(strstr(json, "\"event_seq\":1"));
     assert(json[n - 1] == '\n');
     assert(flow_json_format(&r, tiny, sizeof(tiny)) == -ENOSPC);
 
@@ -58,10 +62,14 @@ int main(void)
     assert(n > 0);
     assert(strstr(json, "\"router_name\":\"nlbw-lab\""));
     assert(strstr(json, "\"event_type\":\"NEW\""));
-    assert(strstr(json, "\"connection_id\":\"test-boot-42-100-0\""));
+    assert(strstr(json, "\"event_time_ms\":100123"));
+    assert(strstr(json, "\"event_seq\":3"));
+    assert(strstr(json, "\"connection_id\":\"test-boot-42-100-123456789\""));
     n = flow_json_format_event(&r, "DESTROY", "test-boot", "nlbw-lab", json, sizeof(json));
     assert(n > 0);
     assert(strstr(json, "\"event_type\":\"DESTROY\""));
+    assert(strstr(json, "\"event_time_ms\":200987"));
+    assert(strstr(json, "\"event_seq\":4"));
     assert(strstr(json, "\"connection_id\":\"test-boot-42-100-0\""));
     puts("flow JSON tests: PASS");
     return 0;
