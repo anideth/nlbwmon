@@ -21,6 +21,10 @@
 This branch adds optional, per-connection flow records to nlbwmon's existing Linux conntrack accounting. It uses the daemon's existing netlink processing instead of running a second zero-on-read conntrack poller. Completed flows can be formatted as newline-delimited JSON (JSONL) and sent to a configured TCP collector.
 
 
+## Upstream maintenance and updates
+
+The fork can incorporate fixes from [the original nlbwmon](https://github.com/jow-/nlbwmon) through a reviewed Git merge, but upstream updates are **not automatic**. For a beginner-friendly, rollback-aware procedure see [UPSTREAM_SYNC.md](docs/UPSTREAM_SYNC.md). Updates are merged in a separate integration branch, built and tested in the lab before inclusion in a release. No upstream merge has been performed as part of beta preparation.
+
 ## Why this fork exists
 
 This is an **unofficial, experimental fork** of [nlbwmon by Jo-Philipp Wich](https://github.com/jow-/nlbwmon). It began with a practical OpenWrt monitoring problem: the existing setup needed both dependable traffic accounting and detailed connection records for OpenSearch. In the original multi-consumer approach, counter reads/resets and independent conntrack processing made it difficult to correlate totals with individual flows consistently. The fork extends the existing nlbwmon collection path so that traffic accounting and conntrack lifecycle telemetry can be produced together, instead of adding a second competing collector. This is the project's motivation, **not** a guarantee of lossless counters or events.
