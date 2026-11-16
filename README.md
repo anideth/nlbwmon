@@ -89,6 +89,12 @@ Set `enabled` to `1` and supply **both** `tcp_host` and `tcp_port` to enable TCP
 See [docs/FLOW_EXPORT.md](docs/FLOW_EXPORT.md) for configuration and protocol details, and [docs/limitations.md](docs/limitations.md) for delivery guarantees, privacy, known risks, and verified vs unverified behavior.
 
 
+## Grafana dashboard (optional)
+
+The optional [OpenWrt Grafana dashboard](grafana/README.md) extends [try2codesecure's OpenWRT dashboard #11147](https://grafana.com/grafana/dashboards/11147/) with WAN RX/TX, per-device network traffic and top download/upload views. It uses Prometheus metrics from OpenWrt and the separate [third-party nlbwmon Lua collector](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector); **it does not display conntrack lifecycle flow records** and is not included in the APK.
+
+A screenshot of the four traffic panels is prepared for `grafana/screenshots/traffic-overview.png`. The image and importable dashboard JSON are **not yet committed**, pending binary upload and a Grafana 13 import test. See [dashboard setup, attribution and release status](grafana/README.md).
+
 ## Prometheus per-device traffic monitoring (optional)
 
 The JSONL conntrack flow exporter in this fork and the nlbwmon Prometheus collector are **different, independent features**. The former is experimental, disabled by default, and not a Prometheus exporter; the latter reads the standard `nlbw -c csv` output. **The collector is not bundled in the nlbwmon APK or in prometheus-node-exporter-lua packages.**
