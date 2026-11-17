@@ -70,7 +70,7 @@ int main(void)
     assert(strstr(json, "\"event_type\":\"DESTROY\""));
     assert(strstr(json, "\"event_time_ms\":200987"));
     assert(strstr(json, "\"event_seq\":4"));
-    assert(strstr(json, "\"connection_id\":\"test-boot-42-100-0\""));
+    assert(strstr(json, "\"connection_id\":\"test-boot-42-100-123456789\""));
     puts("flow JSON tests: PASS");
     return 0;
 }
