@@ -1,5 +1,7 @@
 # nlbwmon — experimental conntrack flow export fork
 
+**Installation:** [English](INSTALL.md) | [Русский](INSTALL.ru.md)
+
 **English** | [Русский](README.ru.md)
 
 ## Why this fork exists
