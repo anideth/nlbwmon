@@ -1,5 +1,24 @@
 # nlbwmon — experimental conntrack flow export fork
 
+**English** | [Русский](README.ru.md)
+
+## Why this fork exists
+
+The original [nlbwmon by jow-](https://github.com/jow-/nlbwmon) tracks per-device traffic on OpenWrt. This fork was created to support **two uses of conntrack data at once**:
+
+- **Prometheus / Grafana:** retain nlbwmon's existing bandwidth accounting, read by a [separate Prometheus collector](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector).
+- **OpenSearch:** collect individual connection events (addresses, ports, protocol, timestamps, and traffic counters) for search and analysis, using the Python [nlbwmon-aggregator](https://github.com/anideth/nlbwmon-aggregator) project.
+
+**The original problem:** two independent conntrack readers could interfere with one another. A `GET_CTRZERO` read returns counters **and resets them in the kernel**. If one reader gets there first, the other may see zero or incomplete counters, producing inconsistent statistics.
+
+**What changed:** the optional flow exporter is integrated into nlbwmon and shares its existing conntrack event and counter-reading path. It emits JSONL `NEW` and `DESTROY` events over TCP, without adding a second competing read-and-reset poller. The Python lifecycle collector can persist received events in SQLite and forward updates to OpenSearch.
+
+Export is **disabled by default** and **best-effort**: records can be lost during Netlink or TCP failures. This is not a lossless audit system.
+
+See the [project overview](docs/en/OVERVIEW.md) and [Russian overview](docs/ru/OVERVIEW.md). The original upstream documentation is preserved below.
+
+---
+
 > **Release preparation (2026-11-15):** See [beta release checklist, RAM sizing, conntrack mark policy and third-party credits](docs/BETA_RELEASE_CHECKLIST.md). The configured 524288-byte Netlink buffer is **512 KiB, not a 512 MiB router RAM requirement**. No beta Git tag or binary release has been published; this is still experimental.
 
 
