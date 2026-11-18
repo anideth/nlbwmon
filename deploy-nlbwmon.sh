@@ -84,7 +84,7 @@ if [[ $MODE == rollback ]]; then
   printf '\nChecking official repository package availability (read-only)...\n'
   STOCK_LIST=$(remote 'apk update >/dev/null && apk list -a nlbwmon') || fail 'Cannot query official repository. No changes made.'
   printf '%s\n' "$STOCK_LIST"
-  STOCK_VERSIONS=$(printf '%s\n' "$STOCK_LIST" | awk -v arch="$RELEASE_ARCH" '$1 ~ /^nlbwmon-/ && $2 == arch && $0 ~ /\\[upgradable from:|\\[available\\]/ {v=$1; sub(/^nlbwmon-/, "", v); print v}')
+  STOCK_VERSIONS=$(printf '%s\n' "$STOCK_LIST" | awk -v arch="$RELEASE_ARCH" '$1 ~ /^nlbwmon-/ && $2 == arch && index($0, "[upgradable from:") {v=$1; sub(/^nlbwmon-/, "", v); print v}')
   [[ $(printf '%s\n' "$STOCK_VERSIONS" | sed '/^$/d' | wc -l) -eq 1 ]] || fail 'Expected exactly one official package candidate for target architecture. No changes made.'
   STOCK_VERSION=$STOCK_VERSIONS
   [[ "$STOCK_VERSION" =~ ^[0-9A-Za-z.~_+-]+$ ]] || fail 'Invalid stock version'
