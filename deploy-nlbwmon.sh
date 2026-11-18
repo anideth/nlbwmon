@@ -90,8 +90,8 @@ fi
 
 printf '\nWARNING: %s will stop/restart nlbwmon. No automatic rollback on failure.\n' "$MODE"
 printf 'Live database is preserved. A backup is taken while the service runs and may not be fully consistent.\n'
-read -r -p "Type exactly '${MODE^^} $TARGET $HOST' to proceed: " confirm
-[[ "$confirm" == "${MODE^^} $TARGET $HOST" ]] || { echo 'Cancelled'; exit 0; }
+read -r -p "Type exactly '${MODE^^}' to proceed: " confirm
+[[ "$confirm" == "${MODE^^}" ]] || { echo 'Cancelled'; exit 0; }
 
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)
 SAFE_HOST=${HOST//@/_}; SAFE_HOST=${SAFE_HOST//:/_}
