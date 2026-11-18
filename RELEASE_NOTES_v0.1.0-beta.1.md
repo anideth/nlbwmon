@@ -1,6 +1,6 @@
 # nlbwmon v0.1.0-beta.1 — source-only beta
 
-> **Release candidate notes.** The annotated Git tag and GitHub Release must be created after final verification. This document does not itself publish a release.
+> **Published prerelease:** [v0.1.0-beta.1](https://github.com/anideth/nlbwmon/releases/tag/v0.1.0-beta.1). Source archives only; no prebuilt APKs. This document on the development branch is a post-publication documentation update; the tagged snapshot remains unchanged.
 
 This is an **unofficial experimental fork** of nlbwmon, adding optional conntrack lifecycle (NEW/DESTROY) JSONL-over-TCP export while retaining standard per-device accounting. Flow events are received and forwarded to OpenSearch by the separate [nlbwmon-aggregator](https://github.com/anideth/nlbwmon-aggregator) project. A third-party Lua collector by [giuliomagnifico](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector) independently exposes nlbwmon accounting to Prometheus/VictoriaMetrics/Grafana.
 
