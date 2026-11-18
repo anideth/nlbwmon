@@ -9,7 +9,7 @@ This fork replaces the **official nlbwmon package** with an experimental build. 
 
 ## 1. Check compatibility and prepare
 
-The current build workflow targets **OpenWrt 25.12.6** on **x86/64** (lab) and **mediatek/filogic** (ARM64). Do not install the same APK on another target or release. No verified public binary prerelease is available yet.
+The current build workflow targets **OpenWrt 25.12.6** on **x86/64** (lab) and **mediatek/filogic** (ARM64). Do not install the same APK on another target or release. This beta is distributed as source only; no prebuilt APKs are provided for any router target.
 
 On the router, inspect without changing anything:
 
@@ -72,7 +72,7 @@ This is an **illustrative disabled configuration**, not a ready-to-enable policy
 
 ## 5. Install the receiving collector
 
-For individual NEW/DESTROY records in OpenSearch, follow the companion project's **[lifecycle collector INSTALL](https://github.com/anideth/nlbwmon-aggregator/blob/docs/bilingual-beta/INSTALL.md)** ([Русский](https://github.com/anideth/nlbwmon-aggregator/blob/docs/bilingual-beta/INSTALL.ru.md)). That repository is **not yet public**; these links will become accessible to others after its release. The lifecycle collector normally listens on **TCP 5517**; do not confuse it with the legacy Fluent Bit aggregator on **5515**. Confirm the actual configured listener before setting `tcp_port`.
+For individual NEW/DESTROY records in OpenSearch, follow the companion project's **[lifecycle collector INSTALL](https://github.com/anideth/nlbwmon-aggregator/blob/main/INSTALL.md)** ([Русский](https://github.com/anideth/nlbwmon-aggregator/blob/main/INSTALL.ru.md)). That repository is **not yet public**; these links will become accessible to others after its release. The lifecycle collector normally listens on **TCP 5517**; do not confuse it with the legacy Fluent Bit aggregator on **5515**. Confirm the actual configured listener before setting `tcp_port`.
 
 Router-to-collector TCP is **plaintext, unauthenticated and best-effort**. Use a trusted network with firewall restrictions or a secure tunnel; never expose it openly to the Internet. Check controlled NEW/DESTROY events in OpenSearch before relying on the pipeline.
 
