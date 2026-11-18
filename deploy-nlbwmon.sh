@@ -82,10 +82,14 @@ if [[ $MODE == check ]]; then printf '\nCHECK OK. No changes made.\n'; exit 0; f
 # Explicit official package selection, not a generic 'apk upgrade'. Pre-fetch before stopping the service.
 if [[ $MODE == rollback ]]; then
   printf '\nChecking official repository package availability (read-only)...\n'
-  remote 'apk update >/dev/null && apk list -a nlbwmon' || fail 'Cannot query official repository. No changes made.'
-  read -r -p 'Enter exact OFFICIAL repository package version (e.g. 2025.06.02~29236be6-r1): ' STOCK_VERSION
+  STOCK_LIST=$(remote 'apk update >/dev/null && apk list -a nlbwmon') || fail 'Cannot query official repository. No changes made.'
+  printf '%s\n' "$STOCK_LIST"
+  STOCK_VERSIONS=$(printf '%s\n' "$STOCK_LIST" | awk -v arch="$RELEASE_ARCH" '$1 ~ /^nlbwmon-/ && $2 == arch && $0 ~ /\\[upgradable from:|\\[available\\]/ {v=$1; sub(/^nlbwmon-/, "", v); print v}')
+  [[ $(printf '%s\n' "$STOCK_VERSIONS" | sed '/^$/d' | wc -l) -eq 1 ]] || fail 'Expected exactly one official package candidate for target architecture. No changes made.'
+  STOCK_VERSION=$STOCK_VERSIONS
   [[ "$STOCK_VERSION" =~ ^[0-9A-Za-z.~_+-]+$ ]] || fail 'Invalid stock version'
   [[ "$STOCK_VERSION" != "$FORK_VERSION-r$FORK_RELEASE" ]] || fail 'Stock version equals fork version'
+  printf 'Selected official package: nlbwmon-%s (%s)\n' "$STOCK_VERSION" "$RELEASE_ARCH"
 fi
 
 printf '\nWARNING: %s will stop/restart nlbwmon. No automatic rollback on failure.\n' "$MODE"
