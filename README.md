@@ -12,6 +12,19 @@ The project is maintained by a DevOps/infrastructure engineer with extensive Lin
 
 **Architecture note:** a separate Python collector forwards flow events to OpenSearch, while an independent Lua collector exposes existing nlbwmon accounting to Prometheus. The fork does not connect directly to either OpenSearch or Prometheus.
 
+## Two independent data paths: OpenSearch and Prometheus/Grafana
+
+This fork **retains standard nlbwmon accounting** and adds experimental connection lifecycle export. Both can operate at the same time:
+
+| Purpose | Data path | Ownership |
+| --- | --- | --- |
+| Individual NEW/DESTROY flows, addresses, ports and NAT | `nlbwmon → TCP JSONL → Python nlbwmon-aggregator → OpenSearch` | This fork and its companion aggregator |
+| Per-device traffic received/transmitted and connection metrics | `nlbwmon → nlbw -c csv → third-party Lua collector → prometheus-node-exporter-lua → Prometheus/VictoriaMetrics → Grafana` | **Independent work by giuliomagnifico**, not bundled in the APK |
+
+**The Lua collector and original Grafana example are by [giuliomagnifico](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector).** They are independent and not modified or distributed by this fork. Metrics: `nlbwmon_rx_bytes`, `nlbwmon_tx_bytes`, `nlbwmon_connections`.
+
+**Grafana:** [author's original importable dashboard JSON](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector/blob/main/Grafana%20dashboard%20example.json) · [Lua installation, verification and Grafana guide](docs/PROMETHEUS_AND_BACKUP.md). A previously customized dashboard is **not yet included** because its actual modified JSON has not been recovered and reviewed for attribution and privacy.
+
 ## Why this fork exists
 
 The original [nlbwmon by jow-](https://github.com/jow-/nlbwmon) tracks per-device traffic on OpenWrt. This fork was created to support **two uses of conntrack data at once**:
