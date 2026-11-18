@@ -12,6 +12,19 @@
 
 **Важно:** события в OpenSearch передаёт отдельный Python-агрегатор, а метрики Prometheus предоставляет независимый Lua-коллектор поверх обычного учёта nlbwmon. Сам форк не подключается напрямую ни к OpenSearch, ни к Prometheus.
 
+## Два независимых потока данных: OpenSearch и Prometheus/Grafana
+
+Наш форк **сохраняет стандартный учёт nlbwmon** и добавляет экспериментальный экспорт событий соединений. В одной установке можно использовать оба направления одновременно:
+
+| Назначение | Путь данных | Компонент |
+| --- | --- | --- |
+| События отдельных соединений, NEW/DESTROY, адреса, порты, NAT | `nlbwmon → TCP JSONL → Python nlbwmon-aggregator → OpenSearch` | Разработка этого проекта и связанного агрегатора |
+| Метрики трафика по устройствам, приём/передача, количество соединений | `nlbwmon → nlbw -c csv → сторонний Lua collector → prometheus-node-exporter-lua → Prometheus/VictoriaMetrics → Grafana` | **Сторонняя разработка giuliomagnifico**, не включена в APK |
+
+**Автор Lua-коллектора и исходного примера панели Grafana — [giuliomagnifico](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector).** Это независимый компонент, который не модифицировался и не входит в наш форк. Его метрики: `nlbwmon_rx_bytes`, `nlbwmon_tx_bytes`, `nlbwmon_connections`.
+
+**Grafana:** [исходный JSON-шаблон автора](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector/blob/main/Grafana%20dashboard%20example.json) · [установка Lua, проверка метрик и импорт Grafana на русском](docs/ru/PROMETHEUS_GRAFANA.md). Наш изменённый ранее dashboard **пока не включён в репозиторий**: его оригинальный JSON необходимо отдельно получить и проверить перед публикацией, чтобы не выдавать чужой шаблон за собственный.
+
 ## Зачем создан форк
 
 Оригинальный [nlbwmon (jow-)](https://github.com/jow-/nlbwmon) учитывает трафик устройств в OpenWrt. Нам понадобилось одновременно использовать данные conntrack для двух задач:
