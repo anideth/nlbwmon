@@ -113,6 +113,11 @@ wget -O /usr/lib/lua/prometheus-collectors/nlbwmon.lua https://raw.githubusercon
 
 Обновление прошивки с сохранением конфигурации **не гарантирует** сохранения вручную установленных файлов в `/usr/lib` и дополнительных пакетов. Перед `sysupgrade` следуйте инструкции резервирования по ссылке выше.
 
+
+![Обзор трафика устройств в Grafana](grafana/screenshots/traffic-overview.png)
+
+*Пример панели Grafana. [JSON-шаблон с выбором WAN-интерфейса](grafana/openwrt-nlbwmon-dashboard.json) · [инструкция по настройке и импорту](docs/ru/PROMETHEUS_GRAFANA.md).*
+
 ## Статус и совместимость
 
 - **Ветка разработки:** `feature/flow-lifecycle-events`; `master` оставляем для синхронизации с upstream.
