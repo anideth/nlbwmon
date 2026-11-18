@@ -23,7 +23,7 @@ This fork **retains standard nlbwmon accounting** and adds experimental connecti
 
 **The Lua collector and original Grafana example are by [giuliomagnifico](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector).** They are independent and not modified or distributed by this fork. Metrics: `nlbwmon_rx_bytes`, `nlbwmon_tx_bytes`, `nlbwmon_connections`.
 
-**Grafana:** [author's original importable dashboard JSON](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector/blob/main/Grafana%20dashboard%20example.json) · [Lua installation, verification and Grafana guide](docs/PROMETHEUS_AND_BACKUP.md). A previously customized dashboard is **not yet included** because its actual modified JSON has not been recovered and reviewed for attribution and privacy.
+**Grafana:** [adapted OpenWrt dashboard JSON](grafana/openwrt-nlbwmon-dashboard.json) (user-tested WAN interface selector) · [setup and import guide](docs/PROMETHEUS_AND_BACKUP.md) · [third-party author's original example](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector/blob/main/Grafana%20dashboard%20example.json). **Set your own Prometheus/VictoriaMetrics datasource UID before importing**: the published JSON uses the neutral placeholder `PROMETHEUS_DATASOURCE_UID` rather than a private installation UID. The `WAN interface` selector defaults to `pppoe-wan`.
 
 ## Why this fork exists
 
