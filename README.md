@@ -8,7 +8,7 @@
 
 The project is maintained by a DevOps/infrastructure engineer with extensive Linux and networking experience but limited professional software development experience. Changes to C code, build scripts, and deployment tooling were developed with substantial AI-tool assistance; architecture, deployment, and tests were carried out in a personal lab. No independent security audit or broad compatibility certification has been completed.
 
-**Status: experimental development / beta preparation.** Observed OpenSearch ingestion and simultaneous preservation of nlbwmon metrics do not prove event completeness, correct attribution across all NAT scenarios, or compatibility with every OpenWrt, OpenSearch, and Prometheus version. Intended primarily for lab and self-hosted experimentation.
+**Version: `v0.1.0-beta.1` (source-only beta candidate; Git tag and GitHub Release pending). Status: experimental beta.** Observed OpenSearch ingestion and simultaneous preservation of nlbwmon metrics do not prove event completeness, correct attribution across all NAT scenarios, or compatibility with every OpenWrt, OpenSearch, and Prometheus version. Intended primarily for lab and self-hosted experimentation.
 
 **Architecture note:** a separate Python collector forwards flow events to OpenSearch, while an independent Lua collector exposes existing nlbwmon accounting to Prometheus. The fork does not connect directly to either OpenSearch or Prometheus.
 
@@ -42,7 +42,7 @@ See the [project overview](docs/en/OVERVIEW.md) and [Russian overview](docs/ru/O
 
 ---
 
-> **Release preparation (2026-11-15):** See [beta release checklist, RAM sizing, conntrack mark policy and third-party credits](docs/BETA_RELEASE_CHECKLIST.md). The configured 524288-byte Netlink buffer is **512 KiB, not a 512 MiB router RAM requirement**. No beta Git tag or binary release has been published; this is still experimental.
+> **Beta source snapshot (2026-11-18):** See [beta release checklist, RAM sizing, conntrack mark policy and third-party credits](docs/BETA_RELEASE_CHECKLIST.md). The configured 524288-byte Netlink buffer is **512 KiB, not a 512 MiB router RAM requirement**. This is a source-only beta: no universal or prebuilt OpenWrt APK is distributed. Git tag and GitHub Release are pending.
 
 
 > [!CAUTION]
@@ -61,14 +61,14 @@ This branch adds optional, per-connection flow records to nlbwmon's existing Lin
 
 ## Versioning and release status
 
-**Development status: pre-release; no official fork release or Git tag has been published yet.** The planned first tag is `v0.1.0-alpha.1`, to be created only after the release commit is finalized. Until then, use a specific Git commit to identify a build. The upstream OpenWrt package version is **not** the fork version.
+**Beta source version: `v0.1.0-beta.1`.** The matching annotated Git tag and GitHub Release still need to be published; the version is assigned in this source snapshot, not yet a downloadable release. Until then, use a specific Git commit to identify a build. The upstream OpenWrt package version is **not** the fork version.
 
 - This repository's default development branch is `feature/flow-lifecycle-events`; `master` is retained for upstream synchronization.
-- Proposed fork versions follow SemVer pre-release tags (`v0.1.0-alpha.1`, then later alpha versions as appropriate); these do not imply production readiness.
+- Fork source versions follow SemVer pre-release tags (`v0.1.0-beta.1` and subsequent beta versions); these do not imply production readiness.
 - The wire schema `nlbwmon-flow-v1` is independent of the Git/release version.
 - See [CHANGELOG.md](CHANGELOG.md), [docs/VERSIONING.md](docs/VERSIONING.md), [docs/limitations.md](docs/limitations.md), and [lab validation](docs/lab-validation-2026-11-13.md).
 
-For the reproducible dual-target OpenWrt APK build, fork package identity, installation precautions, and rollback test requirements, see [Building and rollback](docs/BUILD_AND_ROLLBACK.md). The alpha package version is `0.1.0_alpha1-r1` and is distinct from the official OpenWrt package version. **No binary release or tested automatic rollback is available yet.**
+For the reproducible dual-target OpenWrt APK build, fork package identity, installation precautions, and rollback test requirements, see [Building and rollback](docs/BUILD_AND_ROLLBACK.md). The alpha package version is `0.1.0_alpha1-r1` and is distinct from the official OpenWrt package version. **This is a source-only beta; no prebuilt APK is offered. Automatic rollback is not guaranteed.**
 
 ## What this fork adds
 
