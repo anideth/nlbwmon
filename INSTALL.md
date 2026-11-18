@@ -83,3 +83,9 @@ The interactive script can attempt an explicit reinstall of the **official** nlb
 The Prometheus Lua collector is **not included** in this APK. For its separate installation and firmware-upgrade precautions, see [Prometheus and backup](docs/PROMETHEUS_AND_BACKUP.md). For exporter delivery and privacy limitations, see [limitations](docs/limitations.md).
 
 **Release gate:** do not publish an installable beta until clean build, lab installation, end-to-end NEW/DESTROY verification, rollback, and public-data audit are complete.
+
+## 7. Concurrent Prometheus metrics and Grafana dashboard
+
+OpenSearch connection export **does not disable** normal nlbwmon accounting. The independent Lua collector by giuliomagnifico reads `nlbw -c csv` and exposes `nlbwmon_rx_bytes`, `nlbwmon_tx_bytes`, and `nlbwmon_connections` through `prometheus-node-exporter-lua`. It is **third-party software**, not bundled in this APK.
+
+See [collector installation, backup and Grafana import guide](docs/PROMETHEUS_AND_BACKUP.md). The [adapted Grafana dashboard JSON](grafana/openwrt-nlbwmon-dashboard.json) supports a `WAN interface` selector (default `pppoe-wan`). Replace `PROMETHEUS_DATASOURCE_UID` with your own Prometheus/VictoriaMetrics datasource UID before import.
