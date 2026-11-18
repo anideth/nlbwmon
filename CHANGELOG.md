@@ -3,7 +3,12 @@
 > [!CAUTION]
 > Experimental fork. Not production-ready; flow events can be lost, duplicated, or incomplete. Do not use for billing, compliance, or security auditing.
 
-## Unreleased — candidate for v0.1.0-alpha.1
+## v0.1.0-beta.1 — source-only beta candidate (Git tag and Release pending)
+
+- No prebuilt APKs are provided. Build for the exact OpenWrt release, target and package architecture using the matching SDK.
+- The existing experimental SDK package recipe may still use `0.1.0_alpha1-r1`; it is not a universal binary release.
+- Added bilingual installation documentation, separate Lua/Prometheus/Grafana instructions, a sanitized Grafana dashboard with a tested WAN interface selector, and a collapsed dashboard screenshot in both READMEs.
+
 
 ### Added
 - Optional conntrack flow lifecycle export (NEW/DESTROY) using JSONL over TCP.
