@@ -1,8 +1,16 @@
-# nlbwmon — experimental conntrack flow export fork
+# nlbwmon — concurrent OpenSearch connection export and Prometheus metrics
 
 **Installation:** [English](INSTALL.md) | [Русский](INSTALL.ru.md)
 
 **English** | [Русский](README.ru.md)
+
+## Maintainer, AI assistance and project maturity
+
+The project is maintained by a DevOps/infrastructure engineer with extensive Linux and networking experience but limited professional software development experience. Changes to C code, build scripts, and deployment tooling were developed with substantial AI-tool assistance; architecture, deployment, and tests were carried out in a personal lab. No independent security audit or broad compatibility certification has been completed.
+
+**Status: experimental development / beta preparation.** Observed OpenSearch ingestion and simultaneous preservation of nlbwmon metrics do not prove event completeness, correct attribution across all NAT scenarios, or compatibility with every OpenWrt, OpenSearch, and Prometheus version. Intended primarily for lab and self-hosted experimentation.
+
+**Architecture note:** a separate Python collector forwards flow events to OpenSearch, while an independent Lua collector exposes existing nlbwmon accounting to Prometheus. The fork does not connect directly to either OpenSearch or Prometheus.
 
 ## Why this fork exists
 
