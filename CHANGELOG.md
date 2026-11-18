@@ -3,7 +3,7 @@
 > [!CAUTION]
 > Experimental fork. Not production-ready; flow events can be lost, duplicated, or incomplete. Do not use for billing, compliance, or security auditing.
 
-## v0.1.0-beta.1 — source-only beta candidate (Git tag and Release pending)
+## v0.1.0-beta.1 — source-only beta (published 2026-11-18)
 
 - No prebuilt APKs are provided. Build for the exact OpenWrt release, target and package architecture using the matching SDK.
 - The existing experimental SDK package recipe may still use `0.1.0_alpha1-r1`; it is not a universal binary release.
