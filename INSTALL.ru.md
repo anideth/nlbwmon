@@ -94,3 +94,9 @@ Prometheus Lua collector **не входит** в APK. Его установка
 - Скрипт `deploy-nlbwmon.sh` после экрана проверки цели запрашивает короткое подтверждение `DEPLOY` или `ROLLBACK`. Автоматического восстановления после ошибки нет.
 
 Это результаты ограниченного лабораторного тестирования, а не подтверждение готовности к эксплуатации в production.
+
+## 7. Метрики Prometheus и панель Grafana (параллельно с OpenSearch)
+
+Экспорт событий соединений в OpenSearch **не отключает** стандартный учёт nlbwmon. Отдельный Lua-коллектор giuliomagnifico читает `nlbw -c csv` и отдаёт метрики `nlbwmon_rx_bytes`, `nlbwmon_tx_bytes`, `nlbwmon_connections` в `prometheus-node-exporter-lua`. Это **сторонняя зависимость**, не часть нашего APK.
+
+[Установка Lua-коллектора, импорт нашего dashboard, выбор WAN interface и настройка datasource](docs/ru/PROMETHEUS_GRAFANA.md). [JSON-шаблон Grafana](grafana/openwrt-nlbwmon-dashboard.json) содержит нейтральный UID-заполнитель `PROMETHEUS_DATASOURCE_UID` — перед импортом замените его UID своего источника Prometheus/VictoriaMetrics. WAN-интерфейс выбирается из списка; по умолчанию `pppoe-wan`.
