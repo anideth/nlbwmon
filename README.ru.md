@@ -23,7 +23,7 @@
 
 **Автор Lua-коллектора и исходного примера панели Grafana — [giuliomagnifico](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector).** Это независимый компонент, который не модифицировался и не входит в наш форк. Его метрики: `nlbwmon_rx_bytes`, `nlbwmon_tx_bytes`, `nlbwmon_connections`.
 
-**Grafana:** [исходный JSON-шаблон автора](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector/blob/main/Grafana%20dashboard%20example.json) · [установка Lua, проверка метрик и импорт Grafana на русском](docs/ru/PROMETHEUS_GRAFANA.md). Наш изменённый ранее dashboard **пока не включён в репозиторий**: его оригинальный JSON необходимо отдельно получить и проверить перед публикацией, чтобы не выдавать чужой шаблон за собственный.
+**Grafana:** [наш адаптированный JSON-шаблон](grafana/openwrt-nlbwmon-dashboard.json) (на основе пользовательской панели OpenWrt; с выбором WAN-интерфейса) · [инструкция установки и импорта на русском](docs/ru/PROMETHEUS_GRAFANA.md) · [оригинальный пример стороннего автора](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector/blob/main/Grafana%20dashboard%20example.json). **При импорте необходимо назначить собственный Prometheus/VictoriaMetrics datasource**: в публикуемом JSON вместо частного UID указан `PROMETHEUS_DATASOURCE_UID`. Выбор интерфейса `WAN interface` проверен пользователем; по умолчанию `pppoe-wan`.
 
 ## Зачем создан форк
 
