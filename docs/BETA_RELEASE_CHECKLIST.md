@@ -14,14 +14,14 @@ The current scripted build targets OpenWrt **25.12.6**, using matching SDKs:
 - `mediatek/filogic` / `aarch64_cortex-a53` for the tested ASUS TUF-AX4200 class;
 - `x86/64` / `x86_64` for lab VMs.
 
-The target SDK, libc/toolchain ABI, OpenWrt release and package dependencies must match the device. Do not install a Filogic APK on an arbitrary ARM router. Follow [BUILD_AND_ROLLBACK.md](BUILD_AND_ROLLBACK.md) for exact SDK layout, reproducible source commit, package identity, SHA256, lab snapshot and rollback preflight.
+The target SDK, libc/toolchain ABI, OpenWrt release and package dependencies must match the device. Do not install a Filogic APK on an arbitrary ARM router. Follow [BUILD_AND_ROLLBACK.md](BUILD_AND_ROLLBACK.md) for exact SDK layout, reproducible source commit, package identity, SHA256, VM backup and rollback preflight.
 
 ```sh
 bash build-nlbwmon.sh --target x86-64
 bash build-nlbwmon.sh --target filogic
 ```
 
-Build scripts do not change the router. Never promise automatic rollback: the interactive deploy helper does not implement it and must be validated against a lab snapshot before general release.
+Build scripts do not change the router. Never promise automatic rollback: the interactive deploy helper does not implement it. Its install/rollback path was tested only on an x86/64 lab VM, not on physical Filogic hardware.
 
 ## Mark/mask: where marks come from
 
@@ -46,8 +46,8 @@ Other upstream dependencies/services: [OpenWrt](https://openwrt.org/), [Linux co
 ## Release checklist (not yet signed off)
 
 - [ ] Audit fork diff, preserve original ISC license, document all added-file authors and licenses.
-- [ ] Verify exact build inputs and SHA256, correct init/config files in APK, package metadata and target-specific dependencies.
-- [ ] Test install, restart, UCI retention and downgrade to official nlbwmon on a Proxmox lab snapshot.
+- [x] Build both OpenWrt 25.12.6 x86/64 and mediatek/filogic APKs; SHA256 sidecar checks passed (2026-11-18). Exact source/provenance and installed file contents still require independent release review.
+- [x] On the x86/64 lab VM, verify alpha install, restart, unchanged UCI config, official package rollback and subsequent alpha redeploy with flow events resuming (2026-11-18). VM PBS backup succeeded before testing; no hardware Filogic rollback test.
 - [ ] Verify mark/mask behavior with and without firewall conntrack marking and ensure no other zero-on-read conntrack consumer.
 - [ ] Measure router RAM/CPU and netlink drop behavior on low-memory hardware; document tested rather than assumed minimums.
 - [ ] Verify real NEW/DESTROY pairing, NAT/IPv6 behavior, overflow and reconnect loss; document best-effort limitations.
