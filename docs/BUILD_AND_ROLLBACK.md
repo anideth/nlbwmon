@@ -49,3 +49,14 @@ Do not publish private hostnames, IP addresses, TCP collector endpoints or backe
 ## Release gate
 
 Only after successful build verification for each architecture and an end-to-end lab install/rollback should the project create an immutable annotated Git tag and a GitHub **Pre-release** with target-specific APKs, checksums, provenance, tested rollback instructions and known limitations.
+
+## Verified laboratory results (2026-11-18)
+
+- OpenWrt 25.12.6 SDK builds succeeded for x86/64 (`x86_64`) and mediatek/filogic (`aarch64_cortex-a53`); both resulting alpha APK SHA256 sidecar checks passed.
+- On the **x86/64 test router only**, the interactive deploy helper installed `nlbwmon-0.1.0_alpha1-r1`, preserved the UCI configuration checksum, and started the service. Flow documents and metrics were observed arriving after deployment.
+- The same test router was rolled back to the official repository package `nlbwmon-2025.06.02~29236be6-r1` using the helper's automatic official-version detection. It reported `ROLLBACK OK`, preserved configuration, and restarted the service.
+- The owner then redeployed alpha and confirmed that logs/events resumed. A Proxmox Backup Server VM backup was completed successfully before testing.
+- **Not verified:** install/rollback on a physical Filogic router, production safety, long-running reliability, lossless delivery, independent restoration from the backup, or byte-for-byte installed-binary provenance. The package version is the same before and after the lab reinstall; do not infer the installed binary changed from the version label.
+- The helper now requests only `DEPLOY` or `ROLLBACK` after displaying the target review; it detects the official rollback version automatically. It does **not** provide automatic recovery on failure. `apk update` refreshes repository indexes on the target.
+
+These observed results supersede earlier pre-test statements in this document about the rollback procedure being untested. This is still an experimental pre-release, not a production certification.
