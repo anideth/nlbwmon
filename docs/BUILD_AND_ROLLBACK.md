@@ -36,15 +36,24 @@ The script archives committed Git source, stages it in `~/projects/nlbwmon-build
 
 The SDK feed's `nlbwmon.hotplug` remains from the official feed. The fork config's `flow_export` section is disabled by default. The third-party Prometheus Lua collector is **not** bundled in the APK.
 
-## Interactive deploy and rollback (not yet validated)
+## Interactive deploy and rollback (verified in the x86/64 lab)
 
-**Do not install on the production router until the x86 lab has completed a real install and rollback test.** The build script is not an installer.\n\nCopy `deploy-nlbwmon.conf.example` to `deploy-nlbwmon.local.conf`, edit your SSH destinations and keep the local file out of Git (it is ignored). Run `bash deploy-nlbwmon.sh` for the interactive menu. The script provides read-only check, alpha deploy and explicit official-repository rollback. It checks the remote OpenWrt release, target and architecture, makes a local backup of the router's current config/database, checks SHA256 on uploaded alpha packages, stops and restarts the service and verifies that the config checksum did not change. Rollback prompts for the exact official package version and attempts to fetch that package from the device's configured APK repositories **before** stopping the service. This behavior is code only: the actual `apk fetch`, downgrade flags and UCI preservation remain untested on OpenWrt 25.12.6.\n\n**Safety:** The script does not automatically restore a backup or roll back a failed install. It must first be tested on a Proxmox snapshot of the lab VM. The private local config must never be included in the release.\n
+The build script only creates packages; it does not install them. Configure `deploy-nlbwmon.local.conf` from `deploy-nlbwmon.conf.example` and **do not commit the private local configuration**. Run `bash deploy-nlbwmon.sh` for the interactive menu; review the exact SSH host, target and package before confirming `DEPLOY` or `ROLLBACK`.
 
-Before installation, inspect the target's OpenWrt version, target and architecture, confirm official `nlbwmon` availability in its configured APK repositories, and back up the live `/etc/config/nlbwmon`, database directory and installed package metadata. Package manager handling of configuration files must be tested: including a config template in the APK does not guarantee that a new `flow_export` section appears in an existing user configuration. Do not overwrite user settings.
+The helper checks OpenWrt 25.12.6 identity and architecture, backs up router data and configuration locally, verifies the uploaded APK checksum, installs the chosen package, restarts `nlbwmon`, validates `nlbw -c csv`, and compares the configuration checksum. For rollback it discovers the matching official repository package automatically, checks its metadata, and fetches it before stopping the service. `apk update` refreshes repository indexes. The script **does not automatically recover from a failed install**, and its live database backup may be inconsistent.
 
-A rollback must explicitly reinstall the **official repository** build (not the local alpha APK), restore the official init script, and preserve the live accounting database. The official init script ignores the extra `flow_export` section; keep that section for possible later reinstall, but verify actual behavior in the lab. Test the exact downgrade command and repository selection before documenting it as working. A month-old database backup must not replace the live database during ordinary rollback.
+### Observed lab results — 2026-11-18
 
-Do not publish private hostnames, IP addresses, TCP collector endpoints or backed-up configuration in public releases.
+- Both OpenWrt SDK builds succeeded: x86/64 (`x86_64`) and mediatek/filogic (`aarch64_cortex-a53`); both APK SHA256 files verified.
+- On the **x86/64 test router**, alpha `nlbwmon-0.1.0_alpha1-r1` deployed successfully; config checksum remained unchanged; service ran and OpenSearch flow documents and Prometheus metrics continued arriving.
+- Rollback to the official `nlbwmon-2025.06.02~29236be6-r1` succeeded using automatic candidate selection. `ROLLBACK OK` confirmed service running and config unchanged.
+- Re-deploying alpha subsequently restored flow events according to the owner. The VM had a successful Proxmox Backup Server backup before tests.
+
+**Scope:** these observations validate the tested x86/64 workflow, not a physical Filogic install or rollback, long-running stability, event completeness, recovery from every failure, or restoration from the PBS backup. Do not install on a production router solely based on this result.
+
+Before any upgrade, back up the live accounting database and UCI configuration; do not replace current accounting data with an older snapshot during normal rollback. The official init script does not consume the fork's optional `flow_export` section; preserving the section allows re-deploying alpha later.
+
+Do not publish private infrastructure addresses, SSH destinations, secrets, or backed-up configurations.
 
 ## Release gate
 
