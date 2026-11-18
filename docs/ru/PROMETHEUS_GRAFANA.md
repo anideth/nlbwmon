@@ -23,7 +23,11 @@ wget -qO- 'http://127.0.0.1:9100/metrics?collect[]=nlbwmon' | grep '^nlbwmon_' |
 
 ## Шаблон Grafana
 
-**[Скачать исходный JSON-шаблон Grafana автора](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector/blob/main/Grafana%20dashboard%20example.json)**. В Grafana откройте **Dashboards → New → Import**, загрузите JSON и выберите источник Prometheus/VictoriaMetrics, поддерживающий PromQL.
+**[Наш адаптированный JSON-шаблон Grafana](../../grafana/openwrt-nlbwmon-dashboard.json)** — экспорт пользовательской панели OpenWrt с переменной **WAN interface**. Он не является оригинальным шаблоном Lua-коллектора; см. также [исходный пример автора коллектора](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector/blob/main/Grafana%20dashboard%20example.json).
+
+**Перед импортом:** скачайте JSON и замените во всём файле `PROMETHEUS_DATASOURCE_UID` на UID своего источника Prometheus/VictoriaMetrics (Grafana → Connections → Data sources → нужный источник → UID). Это не имя источника, а именно UID. Затем в Grafana выберите **Dashboards → New → Import** и загрузите файл. Формат файла — Grafana Dashboard API v2; проверьте поддержку в вашей версии Grafana. В экспортированном шаблоне исходный UID заменён для защиты сведений о локальной установке.
+
+Вверху панели выберите **WAN interface**: по умолчанию `pppoe-wan`, но доступны интерфейсы из метрики `node_network_receive_bytes_total` для выбранных `job`, `node`, `port`. WAN RX/TX используют `$wan_interface`; остальные панели не менялись. **Пользователь подтвердил работу переключателя в своей Grafana**, но переносимый JSON с заменённым UID ещё не проверялся на чистой установке.
 
 Пример запроса для трафика по устройствам за выбранный интервал:
 
@@ -33,7 +37,7 @@ topk(20, sum by (hostname, ip) (increase(nlbwmon_rx_bytes[$__range]) + increase(
 
 Для суммарного трафика выберите `bytes (IEC)`, для скорости `rate(...[$__rate_interval]) * 8` — `bits/sec`. Для панелей с одним итоговым значением используйте Instant-запрос, если это соответствует типу панели.
 
-**Важно об авторстве:** оригинальный Lua-файл и JSON-шаблон принадлежат стороннему проекту. В этом репозитории мы даём ссылки, но не включаем копии этих файлов. Ранее изменённый пользователем dashboard **не найден в текущих ветках исходников**; его JSON нужно восстановить из Grafana/экспорта, проверить на внутренние имена, адреса, UID источников и лицензию, затем опубликовать отдельно с указанием исходного автора.
+**Авторство:** Lua-коллектор и его оригинальный пример Grafana — сторонний проект giuliomagnifico. Опубликованный здесь адаптированный dashboard предоставлен пользователем и переработан для выбора WAN-интерфейса; он не заявляется как оригинальная работа автора Lua. При дальнейшем распространении сохраняйте ссылки на исходный проект. Проверка авторства всех исходных панелей и совместимости Grafana на других установках не завершена.
 
 ## Обновление OpenWrt и резервные копии
 
