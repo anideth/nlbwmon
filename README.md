@@ -8,7 +8,7 @@
 
 The project is maintained by a DevOps/infrastructure engineer with extensive Linux and networking experience but limited professional software development experience. Changes to C code, build scripts, and deployment tooling were developed with substantial AI-tool assistance; architecture, deployment, and tests were carried out in a personal lab. No independent security audit or broad compatibility certification has been completed.
 
-**Version: `v0.1.0-beta.1` (source-only beta candidate; Git tag and GitHub Release pending). Status: experimental beta.** Observed OpenSearch ingestion and simultaneous preservation of nlbwmon metrics do not prove event completeness, correct attribution across all NAT scenarios, or compatibility with every OpenWrt, OpenSearch, and Prometheus version. Intended primarily for lab and self-hosted experimentation.
+**Version: `v0.1.0-beta.1` (published source-only beta). Status: experimental beta.** Observed OpenSearch ingestion and simultaneous preservation of nlbwmon metrics do not prove event completeness, correct attribution across all NAT scenarios, or compatibility with every OpenWrt, OpenSearch, and Prometheus version. Intended primarily for lab and self-hosted experimentation.
 
 **Architecture note:** a separate Python collector forwards flow events to OpenSearch, while an independent Lua collector exposes existing nlbwmon accounting to Prometheus. The fork does not connect directly to either OpenSearch or Prometheus.
 
@@ -42,7 +42,7 @@ See the [project overview](docs/en/OVERVIEW.md) and [Russian overview](docs/ru/O
 
 ---
 
-> **Beta source snapshot (2026-11-18):** See [beta release checklist, RAM sizing, conntrack mark policy and third-party credits](docs/BETA_RELEASE_CHECKLIST.md). The configured 524288-byte Netlink buffer is **512 KiB, not a 512 MiB router RAM requirement**. This is a source-only beta: no universal or prebuilt OpenWrt APK is distributed. Git tag and GitHub Release are pending.
+> **Beta source snapshot (2026-11-18):** See [beta release checklist, RAM sizing, conntrack mark policy and third-party credits](docs/BETA_RELEASE_CHECKLIST.md). The configured 524288-byte Netlink buffer is **512 KiB, not a 512 MiB router RAM requirement**. This is a source-only beta: no universal or prebuilt OpenWrt APK is distributed. [GitHub prerelease published](https://github.com/anideth/nlbwmon/releases/tag/v0.1.0-beta.1).
 
 
 > [!CAUTION]
@@ -61,7 +61,7 @@ This branch adds optional, per-connection flow records to nlbwmon's existing Lin
 
 ## Versioning and release status
 
-**Beta source version: `v0.1.0-beta.1`.** The matching annotated Git tag and GitHub Release still need to be published; the version is assigned in this source snapshot, not yet a downloadable release. Until then, use a specific Git commit to identify a build. The upstream OpenWrt package version is **not** the fork version.
+**Beta source version: `v0.1.0-beta.1`.** The [GitHub prerelease](https://github.com/anideth/nlbwmon/releases/tag/v0.1.0-beta.1) and Git tag are published; the release contains source archives only, without prebuilt APKs. For reproducibility, identify a build by the tag and its Git commit. The upstream OpenWrt package version is **not** the fork version.
 
 - This repository's default development branch is `feature/flow-lifecycle-events`; `master` is retained for upstream synchronization.
 - Fork source versions follow SemVer pre-release tags (`v0.1.0-beta.1` and subsequent beta versions); these do not imply production readiness.
