@@ -72,7 +72,7 @@ config flow_export
 
 ## 5. Установка принимающего коллектора
 
-Для NEW/DESTROY в OpenSearch используйте **[INSTALL коллектора](https://github.com/anideth/nlbwmon-aggregator/blob/docs/bilingual-beta/INSTALL.ru.md)** ([English](https://github.com/anideth/nlbwmon-aggregator/blob/docs/bilingual-beta/INSTALL.md)) из соседнего проекта. **Этот репозиторий пока закрыт**, поэтому ссылки станут доступны остальным после публикации. Коллектор жизненного цикла обычно слушает **TCP 5517**; не путайте его со старым агрегатором Fluent Bit на **5515**. Перед настройкой `tcp_port` проверьте фактический порт приёмника.
+Для NEW/DESTROY в OpenSearch используйте **[INSTALL коллектора](https://github.com/anideth/nlbwmon-aggregator/blob/docs/bilingual-beta/INSTALL.ru.md)** ([English](https://github.com/anideth/nlbwmon-aggregator/blob/docs/bilingual-beta/INSTALL.md)) из соседнего проекта. Коллектор жизненного цикла обычно слушает **TCP 5517**; не путайте его со старым агрегатором Fluent Bit на **5515**. Перед настройкой `tcp_port` проверьте фактический порт приёмника.
 
 TCP между роутером и коллектором **не шифруется, не аутентифицируется и не гарантирует доставку**. Используйте доверенную сеть с ограничениями firewall или защищённый туннель; не открывайте приёмник в Интернет. Перед использованием проверьте контролируемые события NEW/DESTROY в OpenSearch.
 
