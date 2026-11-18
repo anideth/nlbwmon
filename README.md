@@ -1,4 +1,46 @@
-# nlbwmon — experimental conntrack flow export fork
+# nlbwmon — concurrent OpenSearch connection export and Prometheus metrics
+
+**Installation:** [English](INSTALL.md) | [Русский](INSTALL.ru.md)
+
+**English** | [Русский](README.ru.md)
+
+## Maintainer, AI assistance and project maturity
+
+The project is maintained by a DevOps/infrastructure engineer with extensive Linux and networking experience but limited professional software development experience. Changes to C code, build scripts, and deployment tooling were developed with substantial AI-tool assistance; architecture, deployment, and tests were carried out in a personal lab. No independent security audit or broad compatibility certification has been completed.
+
+**Status: experimental development / beta preparation.** Observed OpenSearch ingestion and simultaneous preservation of nlbwmon metrics do not prove event completeness, correct attribution across all NAT scenarios, or compatibility with every OpenWrt, OpenSearch, and Prometheus version. Intended primarily for lab and self-hosted experimentation.
+
+**Architecture note:** a separate Python collector forwards flow events to OpenSearch, while an independent Lua collector exposes existing nlbwmon accounting to Prometheus. The fork does not connect directly to either OpenSearch or Prometheus.
+
+## Two independent data paths: OpenSearch and Prometheus/Grafana
+
+This fork **retains standard nlbwmon accounting** and adds experimental connection lifecycle export. Both can operate at the same time:
+
+| Purpose | Data path | Ownership |
+| --- | --- | --- |
+| Individual NEW/DESTROY flows, addresses, ports and NAT | `nlbwmon → TCP JSONL → Python nlbwmon-aggregator → OpenSearch` | This fork and its companion aggregator |
+| Per-device traffic received/transmitted and connection metrics | `nlbwmon → nlbw -c csv → third-party Lua collector → prometheus-node-exporter-lua → Prometheus/VictoriaMetrics → Grafana` | **Independent work by giuliomagnifico**, not bundled in the APK |
+
+**The Lua collector and original Grafana example are by [giuliomagnifico](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector).** They are independent and not modified or distributed by this fork. Metrics: `nlbwmon_rx_bytes`, `nlbwmon_tx_bytes`, `nlbwmon_connections`.
+
+**Grafana:** [adapted OpenWrt dashboard JSON](grafana/openwrt-nlbwmon-dashboard.json) (user-tested WAN interface selector) · [setup and import guide](docs/PROMETHEUS_AND_BACKUP.md) · [third-party author's original example](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector/blob/main/Grafana%20dashboard%20example.json). **Set your own Prometheus/VictoriaMetrics datasource UID before importing**: the published JSON uses the neutral placeholder `PROMETHEUS_DATASOURCE_UID` rather than a private installation UID. The `WAN interface` selector defaults to `pppoe-wan`.
+
+## Why this fork exists
+
+The original [nlbwmon by jow-](https://github.com/jow-/nlbwmon) tracks per-device traffic on OpenWrt. This fork was created to support **two uses of conntrack data at once**:
+
+- **Prometheus / Grafana:** retain nlbwmon's existing bandwidth accounting, read by a [separate Prometheus collector](https://github.com/giuliomagnifico/openwrt-nlbwmon-prometheus-collector).
+- **OpenSearch:** collect individual connection events (addresses, ports, protocol, timestamps, and traffic counters) for search and analysis, using the Python [nlbwmon-aggregator](https://github.com/anideth/nlbwmon-aggregator) project.
+
+**The original problem:** two independent conntrack readers could interfere with one another. A `GET_CTRZERO` read returns counters **and resets them in the kernel**. If one reader gets there first, the other may see zero or incomplete counters, producing inconsistent statistics.
+
+**What changed:** the optional flow exporter is integrated into nlbwmon and shares its existing conntrack event and counter-reading path. It emits JSONL `NEW` and `DESTROY` events over TCP, without adding a second competing read-and-reset poller. The Python lifecycle collector can persist received events in SQLite and forward updates to OpenSearch.
+
+Export is **disabled by default** and **best-effort**: records can be lost during Netlink or TCP failures. This is not a lossless audit system.
+
+See the [project overview](docs/en/OVERVIEW.md) and [Russian overview](docs/ru/OVERVIEW.md). The original upstream documentation is preserved below.
+
+---
 
 > **Release preparation (2026-11-15):** See [beta release checklist, RAM sizing, conntrack mark policy and third-party credits](docs/BETA_RELEASE_CHECKLIST.md). The configured 524288-byte Netlink buffer is **512 KiB, not a 512 MiB router RAM requirement**. No beta Git tag or binary release has been published; this is still experimental.
 
@@ -73,6 +115,16 @@ wget -O /usr/lib/lua/prometheus-collectors/nlbwmon.lua https://raw.githubusercon
 ```
 
 A firmware upgrade with preserved configuration does **not** necessarily preserve manually installed files under `/usr/lib` or reinstall extra packages. Follow the linked backup checklist **before** any `sysupgrade`.
+
+
+<details>
+<summary>Show Grafana dashboard screenshot</summary>
+
+![Grafana per-device traffic overview](grafana/screenshots/traffic-overview.png)
+
+*Example Grafana dashboard. [JSON template with WAN interface selector](grafana/openwrt-nlbwmon-dashboard.json) · [installation and import guide](docs/PROMETHEUS_AND_BACKUP.md).*
+
+</details>
 
 ## Status and compatibility
 
