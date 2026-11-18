@@ -117,9 +117,14 @@ wget -O /usr/lib/lua/prometheus-collectors/nlbwmon.lua https://raw.githubusercon
 A firmware upgrade with preserved configuration does **not** necessarily preserve manually installed files under `/usr/lib` or reinstall extra packages. Follow the linked backup checklist **before** any `sysupgrade`.
 
 
+<details>
+<summary>Show Grafana dashboard screenshot</summary>
+
 ![Grafana per-device traffic overview](grafana/screenshots/traffic-overview.png)
 
 *Example Grafana dashboard. [JSON template with WAN interface selector](grafana/openwrt-nlbwmon-dashboard.json) · [installation and import guide](docs/PROMETHEUS_AND_BACKUP.md).*
+
+</details>
 
 ## Status and compatibility
 
