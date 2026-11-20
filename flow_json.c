@@ -33,6 +33,7 @@ int flow_json_format_event(const struct flow_record *record, const char *event_t
     char rs[INET6_ADDRSTRLEN], rd[INET6_ADDRSTRLEN];
     int n;
     char instance_id[128];
+    const struct timespec *identity;
 
     if (!record || !buffer || !size || !event_type || !boot_id || !router_name ||
         (strcmp(event_type, "NEW") && strcmp(event_type, "DESTROY")))
@@ -54,6 +55,9 @@ int flow_json_format_event(const struct flow_record *record, const char *event_t
                  instance_started.tv_nsec) >= (int)sizeof(instance_id))
         return -ENOSPC;
 
+    identity = (record->identity_started.tv_sec || record->identity_started.tv_nsec)
+        ? &record->identity_started : &record->started;
+
     n = snprintf(buffer, size,
         "{\"schema\":\"nlbwmon-flow-v1\",\"exporter_instance_id\":\"%s\",\"event_sequence\":%" PRIu64 ",\"router_name\":\"%s\",\"event_type\":\"%s\",\"connection_id\":\"%s-%" PRIu32 "-%" PRIdMAX "-%ld\",\"id\":%" PRIu32 ",\"mark\":%" PRIu32
         ",\"family\":%u,\"protocol\":%u,\"orig_src\":\"%s\",\"orig_dst\":\"%s\""
@@ -62,8 +66,8 @@ int flow_json_format_event(const struct flow_record *record, const char *event_t
         ",\"orig_bytes\":%" PRIu64 ",\"reply_packets\":%" PRIu64
         ",\"reply_bytes\":%" PRIu64 ",\"started_sec\":%" PRIdMAX
         ",\"finished_sec\":%" PRIdMAX ",\"started_nsec\":%ld,\"finished_nsec\":%ld,\"seen_new\":%s}\n",
-        instance_id, event_sequence + 1, router_name, event_type, boot_id, record->id, (intmax_t)record->identity_started.tv_sec,
-        record->identity_started.tv_nsec, record->id, record->mark, (unsigned)record->original.family,
+        instance_id, event_sequence + 1, router_name, event_type, boot_id, record->id, (intmax_t)identity->tv_sec,
+        identity->tv_nsec, record->id, record->mark, (unsigned)record->original.family,
         (unsigned)record->original.protocol, os, od,
         (unsigned)ntohs(record->original.sport), (unsigned)ntohs(record->original.dport),
         rs, rd, (unsigned)ntohs(record->reply.sport), (unsigned)ntohs(record->reply.dport),
