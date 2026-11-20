@@ -1,5 +1,8 @@
 # nlbwmon — concurrent OpenSearch connection export and Prometheus metrics
 
+
+> **RC preparation:** branch `release/v0.1.0-rc.1` adds nanosecond timestamp fields and event identity/sequence metadata. The RC is **not published**; `v0.1.0-beta.1` remains the last published release. Existing APK version `0.1.0_alpha1-r1` is **not** an RC build. See [changelog](CHANGELOG.md), [wire protocol](docs/FLOW_EXPORT.md) and [versioning](docs/VERSIONING.md).
+
 **Installation:** [English](INSTALL.md) | [Русский](INSTALL.ru.md)
 
 **English** | [Русский](README.ru.md)
