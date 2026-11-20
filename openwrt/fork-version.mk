@@ -1,6 +1,6 @@
 # Experimental fork package identity.
-# Git release: v0.1.0-alpha.1 (candidate; not yet published).
-# OpenWrt APK package version: 0.1.0_alpha1-r1.
-# This file is the single source of truth for the fork's APK version.
-FORK_PKG_VERSION:=0.1.0_alpha1
+# Planned Git source release: v0.1.0-rc.1 (not yet published).
+# OpenWrt APK package version: 0.1.0_rc1-r1.
+# Verify actual SDK package metadata and provenance before publishing.
+FORK_PKG_VERSION:=0.1.0_rc1
 FORK_PKG_RELEASE:=1
