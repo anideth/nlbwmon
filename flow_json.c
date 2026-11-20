@@ -3,7 +3,15 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
+#include <time.h>
+#include <unistd.h>
 #include "flow_json.h"
+
+/* Monotonic within one process, not across daemon restarts. */
+static uint64_t event_sequence;
+static struct timespec instance_started;
+static bool instance_initialized;
 
 static int format_address(const struct flow_tuple *tuple, const struct in6_addr *addr,
                           char *output, size_t size)
@@ -24,6 +32,7 @@ int flow_json_format_event(const struct flow_record *record, const char *event_t
     char os[INET6_ADDRSTRLEN], od[INET6_ADDRSTRLEN];
     char rs[INET6_ADDRSTRLEN], rd[INET6_ADDRSTRLEN];
     int n;
+    char instance_id[128];
 
     if (!record || !buffer || !size || !event_type || !boot_id || !router_name ||
         (strcmp(event_type, "NEW") && strcmp(event_type, "DESTROY")))
@@ -35,15 +44,25 @@ int flow_json_format_event(const struct flow_record *record, const char *event_t
         format_address(&record->reply, &record->reply.dst, rd, sizeof(rd)))
         return -EINVAL;
 
+    if (!instance_initialized) {
+        if (clock_gettime(CLOCK_REALTIME, &instance_started))
+            return -errno;
+        instance_initialized = true;
+    }
+    if (snprintf(instance_id, sizeof(instance_id), "%s-%ld-%" PRIdMAX "-%ld",
+                 boot_id, (long)getpid(), (intmax_t)instance_started.tv_sec,
+                 instance_started.tv_nsec) >= (int)sizeof(instance_id))
+        return -ENOSPC;
+
     n = snprintf(buffer, size,
-        "{\"schema\":\"nlbwmon-flow-v1\",\"router_name\":\"%s\",\"event_type\":\"%s\",\"connection_id\":\"%s-%" PRIu32 "-%" PRIdMAX "-%ld\",\"id\":%" PRIu32 ",\"mark\":%" PRIu32
+        "{\"schema\":\"nlbwmon-flow-v1\",\"exporter_instance_id\":\"%s\",\"event_sequence\":%" PRIu64 ",\"router_name\":\"%s\",\"event_type\":\"%s\",\"connection_id\":\"%s-%" PRIu32 "-%" PRIdMAX "-%ld\",\"id\":%" PRIu32 ",\"mark\":%" PRIu32
         ",\"family\":%u,\"protocol\":%u,\"orig_src\":\"%s\",\"orig_dst\":\"%s\""
         ",\"orig_sport\":%u,\"orig_dport\":%u,\"reply_src\":\"%s\",\"reply_dst\":\"%s\""
         ",\"reply_sport\":%u,\"reply_dport\":%u,\"orig_packets\":%" PRIu64
         ",\"orig_bytes\":%" PRIu64 ",\"reply_packets\":%" PRIu64
         ",\"reply_bytes\":%" PRIu64 ",\"started_sec\":%" PRIdMAX
         ",\"finished_sec\":%" PRIdMAX ",\"started_nsec\":%ld,\"finished_nsec\":%ld,\"seen_new\":%s}\n",
-        router_name, event_type, boot_id, record->id, (intmax_t)record->started.tv_sec,
+        instance_id, ++event_sequence, router_name, event_type, boot_id, record->id, (intmax_t)record->started.tv_sec,
         record->started.tv_nsec, record->id, record->mark, (unsigned)record->original.family,
         (unsigned)record->original.protocol, os, od,
         (unsigned)ntohs(record->original.sport), (unsigned)ntohs(record->original.dport),
