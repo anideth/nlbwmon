@@ -10,7 +10,7 @@
 - Export conntrack kernel timestamps with nanosecond fractions as `started_sec`/`started_nsec` and `finished_sec`/`finished_nsec`; the receiving collector can derive `date_nanos` and duration fields.
 - Include `exporter_instance_id` (daemon-instance identifier) and monotonic per-process `event_sequence` for correlating and diagnosing lifecycle events. Neither guarantees delivery or detects all losses.
 - Keep the wire schema identifier `nlbwmon-flow-v1` unchanged; validate consumers against the additional fields.
-- Allow reproducible builds from the RC release branch; the existing OpenWrt APK version remains `0.1.0_alpha1-r1` until a separately verified versioned rebuild.
+- Allow reproducible builds from the RC release branch; the RC branch package version is now `0.1.0_rc1-r1`; x86-64 and mediatek/filogic SDK builds were reported successful, but RC installation and rollback have not been verified.
 
 ### Observed validation and remaining gates
 - An OpenWrt 25.12.6 mediatek/filogic build was installed and the standard `nlbw -c csv` accounting path remained functional. Lifecycle records with nanosecond precision reached the companion collector/OpenSearch pipeline.
