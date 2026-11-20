@@ -4,8 +4,8 @@ This is an **experimental** fork. It is not a production-ready or lossless flow-
 
 ## Package identity
 
-- Git release candidate: `v0.1.0-alpha.1` (not published).
-- APK version: `0.1.0_alpha1-r1`, configured in `openwrt/fork-version.mk`.
+- Planned Git release candidate: `v0.1.0-rc.1` (not published).
+- RC APK version: `0.1.0_rc1-r1`, configured in `openwrt/fork-version.mk`.
 - Official OpenWrt 25.12.6 package: `2025.06.02~29236be6-r1`.
 - Both have package name `nlbwmon`, so only one can be installed at a time.
 - **Never** identify the fork by the upstream-looking version or by filename alone: inspect APK metadata and record SHA256.
@@ -24,7 +24,7 @@ Check the exact filenames and SHA256 against the official download index and che
 
 Official download root: https://downloads.openwrt.org/releases/25.12.6/targets/
 
-Use an OpenWrt 25.12.6 SDK with the `packages` feed installed and `CONFIG_PACKAGE_nlbwmon=m` enabled. Supported local SDK targets are `x86-64` and `mediatek-filogic`. The provided script uses the existing local SDK layout under `~/projects/openwrt-sdk`; adjust the script for other layouts. The source checkout must be on `feature/flow-lifecycle-events` and have no tracked uncommitted changes.
+Use an OpenWrt 25.12.6 SDK with the `packages` feed installed and `CONFIG_PACKAGE_nlbwmon=m` enabled. Supported local SDK targets are `x86-64` and `mediatek-filogic`. The provided script uses the existing local SDK layout under `~/projects/openwrt-sdk`; adjust the script for other layouts. The source checkout must be on `feature/beta2-timestamps-sequence` or `release/v0.1.0-rc.1` and have no tracked uncommitted changes.
 
 ```sh
 git pull --ff-only
