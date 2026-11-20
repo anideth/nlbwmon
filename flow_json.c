@@ -42,7 +42,7 @@ int flow_json_format_event(const struct flow_record *record, const char *event_t
         ",\"reply_sport\":%u,\"reply_dport\":%u,\"orig_packets\":%" PRIu64
         ",\"orig_bytes\":%" PRIu64 ",\"reply_packets\":%" PRIu64
         ",\"reply_bytes\":%" PRIu64 ",\"started_sec\":%" PRIdMAX
-        ",\"finished_sec\":%" PRIdMAX ",\"seen_new\":%s}\n",
+        ",\"finished_sec\":%" PRIdMAX ",\"started_nsec\":%ld,\"finished_nsec\":%ld,\"seen_new\":%s}\n",
         router_name, event_type, boot_id, record->id, (intmax_t)record->started.tv_sec,
         record->started.tv_nsec, record->id, record->mark, (unsigned)record->original.family,
         (unsigned)record->original.protocol, os, od,
@@ -50,7 +50,8 @@ int flow_json_format_event(const struct flow_record *record, const char *event_t
         rs, rd, (unsigned)ntohs(record->reply.sport), (unsigned)ntohs(record->reply.dport),
         record->orig_packets, record->orig_bytes, record->reply_packets,
         record->reply_bytes, (intmax_t)record->started.tv_sec,
-        (intmax_t)record->finished.tv_sec, record->seen_new ? "true" : "false");
+        (intmax_t)record->finished.tv_sec, record->started.tv_nsec,
+        record->finished.tv_nsec, record->seen_new ? "true" : "false");
 
     if (n < 0)
         return -EIO;
