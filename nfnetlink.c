@@ -65,6 +65,17 @@ static struct nla_policy ct_proto_policy[CTA_PROTO_MAX+1] = {
 	[CTA_PROTO_ICMPV6_CODE] = { .type = NLA_U8 },
 };
 
+static struct nla_policy ct_timestamp_policy[CTA_TIMESTAMP_MAX+1] = {
+	[CTA_TIMESTAMP_START] = { .type = NLA_U64 },
+	[CTA_TIMESTAMP_STOP]  = { .type = NLA_U64 },
+};
+
+static void flow_timestamp_from_ns(struct timespec *dst, uint64_t ns)
+{
+	dst->tv_sec = (time_t)(ns / 1000000000ULL);
+	dst->tv_nsec = (long)(ns % 1000000000ULL);
+}
+
 static struct nla_policy ct_counters_policy[CTA_COUNTERS_MAX+1] = {
 	[CTA_COUNTERS_PACKETS]  = { .type = NLA_U64 },
 	[CTA_COUNTERS_BYTES]    = { .type = NLA_U64 },
@@ -249,6 +260,20 @@ track_flow(struct nlattr **attr, bool from_dump, unsigned int msg_type,
 	flow.orig_bytes = be64toh(orig_bytes);
 	flow.reply_packets = be64toh(reply_pkts);
 	flow.reply_bytes = be64toh(reply_bytes);
+
+	/* Kernel conntrack timestamps are nanoseconds since the Unix epoch,
+	 * encoded as network-order u64. Fall back to CLOCK_REALTIME in
+	 * flow_process() if timestamp accounting is disabled or unavailable. */
+	if (attr[CTA_TIMESTAMP]) {
+		struct nlattr *ts[CTA_TIMESTAMP_MAX + 1];
+		if (!nla_parse_nested(ts, CTA_TIMESTAMP_MAX, attr[CTA_TIMESTAMP],
+		                      ct_timestamp_policy)) {
+			if (ts[CTA_TIMESTAMP_START])
+				flow_timestamp_from_ns(&flow.started, be64toh(nla_get_u64(ts[CTA_TIMESTAMP_START])));
+			if (ts[CTA_TIMESTAMP_STOP])
+				flow_timestamp_from_ns(&flow.finished, be64toh(nla_get_u64(ts[CTA_TIMESTAMP_STOP])));
+		}
+	}
 
 	flow_process(event, &flow);
 }
