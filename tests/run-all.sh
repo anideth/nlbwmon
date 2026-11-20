@@ -16,5 +16,5 @@ for name in flow_export flow_json flow_tcp flow_tcp_loopback flow_tcp_reconnect 
   "$OUT/test_$name"
 done
 echo "=== nfnetlink_parser (OpenWrt SDK/QEMU) ==="
-"$ROOT/tests/run-parser-qemu.sh"
+sh "$ROOT/tests/run-parser-qemu.sh"
 echo "ALL SEVEN TESTS PASSED"
