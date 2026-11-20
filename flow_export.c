@@ -155,6 +155,8 @@ int flow_process(enum flow_event_type event,
             entry->record.started.tv_nsec == 0)
             clock_gettime(CLOCK_REALTIME, &entry->record.started);
 
+        entry->record.identity_started = entry->record.started;
+
         *slot = entry;
         active_count++;
         /* NEW is emitted immediately, exactly once for a newly tracked flow. */
@@ -177,6 +179,10 @@ int flow_process(enum flow_event_type event,
     }
 
     if (event == FLOW_DESTROY) {
+        /* Kernel START may arrive only with DESTROY. Keep the connection
+         * identity stable while using the more accurate START for duration. */
+        if (record->started.tv_sec != 0 || record->started.tv_nsec != 0)
+            stored->started = record->started;
         stored->finished = record->finished;
 
         if (stored->finished.tv_sec == 0 &&
