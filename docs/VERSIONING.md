@@ -8,7 +8,7 @@
 
 - Target source tag: `v0.1.0-rc.1`; release branch: `release/v0.1.0-rc.1`. No tag or GitHub Release exists as part of this preparation step.
 - Source tag, wire schema (`nlbwmon-flow-v1`) and OpenWrt APK package version are **different identifiers**.
-- Current package recipe still specifies `0.1.0_alpha1-r1`; changing it requires rebuilding, verifying APK metadata and testing installation and rollback. Do not label an old APK as RC.
+- The release branch recipe now specifies `0.1.0_rc1-r1`; both x86-64 and mediatek/filogic SDK builds were reported successful. Verify APK metadata, provenance and rollback before publication. Do not label an old APK as RC.
 - The build script accepts the beta2 development branch or the RC release branch; use the final Git commit SHA in build provenance.
 
 ## Version identifiers
@@ -16,7 +16,7 @@
 - **Source release:** SemVer prerelease tag, starting with published source-only beta [`v0.1.0-beta.1`](https://github.com/anideth/nlbwmon/releases/tag/v0.1.0-beta.1).
 - **Development state:** the current default branch is `feature/flow-lifecycle-events`; until a tag is published, identify builds by full Git commit SHA.
 - **Wire format:** `nlbwmon-flow-v1` is a separate schema identifier and does not change with every source release.
-- **OpenWrt APK:** the current SDK recipe still identifies the experimental APK as `0.1.0_alpha1-r1` (candidate); this does **not** change automatically when the source-only beta version is assigned, declared in `openwrt/fork-version.mk`; the official OpenWrt feed currently uses `2025.06.02~29236be6-r1`. Both packages retain the name `nlbwmon`. The fork's version must be applied to the SDK package recipe **before** building; merely adding this file does not change SDK outputs. Verify the built APK metadata and filename for every architecture.
+- **OpenWrt APK:** the RC branch SDK recipe identifies the experimental APK as `0.1.0_rc1-r1` (candidate); this does **not** change automatically when the source-only beta version is assigned, declared in `openwrt/fork-version.mk`; the official OpenWrt feed currently uses `2025.06.02~29236be6-r1`. Both packages retain the name `nlbwmon`. The fork's version must be applied to the SDK package recipe **before** building; merely adding this file does not change SDK outputs. Verify the built APK metadata and filename for every architecture.
 
 ## Release procedure
 
