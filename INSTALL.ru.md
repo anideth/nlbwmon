@@ -1,5 +1,8 @@
 # Установка экспериментального форка nlbwmon
 
+
+> **Подготовка RC:** ветка `release/v0.1.0-rc.1` содержит изменения формата временных меток (наносекунды) и идентификаторов событий. RC ещё не опубликован; последний опубликованный релиз — `v0.1.0-beta.1`. Текущая версия APK `0.1.0_alpha1-r1` не означает RC. Подробности: [CHANGELOG](CHANGELOG.md), [протокол](docs/FLOW_EXPORT.md), [версии](docs/VERSIONING.md).
+
 [English](INSTALL.md) | **Русский**
 
 > [!CAUTION]
@@ -21,7 +24,7 @@ cat /etc/openwrt_release; apk list --installed nlbwmon; nlbw -c csv | head
 
 ## 2. Сборка APK
 
-На Linux x86-64 установите **SDK OpenWrt 25.12.6** (не ImageBuilder), соответствующий целевой архитектуре, с feed `packages` и `CONFIG_PACKAGE_nlbwmon=m`. Скрипт ожидает SDK в `~/projects/openwrt-sdk/` и чистую рабочую копию с зафиксированными коммитами в ветке `feature/flow-lifecycle-events`. Перед запуском просмотрите скрипт.
+На Linux x86-64 установите **SDK OpenWrt 25.12.6** (не ImageBuilder), соответствующий целевой архитектуре, с feed `packages` и `CONFIG_PACKAGE_nlbwmon=m`. Скрипт ожидает SDK в `~/projects/openwrt-sdk/` и чистую рабочую копию с зафиксированными коммитами в ветке `feature/beta2-timestamps-sequence` или `release/v0.1.0-rc.1`. Перед запуском просмотрите скрипт.
 
 ```sh
 bash build-nlbwmon.sh --target x86-64
