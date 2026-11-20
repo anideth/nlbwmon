@@ -89,3 +89,12 @@ For precise delivery guarantees, tested behavior, security implications, and the
 ## Upstream contribution plan
 
 Keep changes separated into reviewable patches: (1) parser correctness and defensive attribute handling, (2) optional flow tracking, (3) serialization and transport, (4) OpenWrt integration and tests. Upstream acceptance is not assumed.
+
+## Nanosecond timestamps and event identity (RC candidate)
+
+The JSONL **wire** record contains `started_sec`, `started_nsec`, `finished_sec`, and `finished_nsec`. Seconds are Unix epoch seconds; nanoseconds are the fractional component (0–999999999). Where the kernel supplies conntrack timestamps they are used; otherwise the exporter can fall back to the system realtime clock. A timestamp in the OpenSearch document such as `flow.started_at` is **derived by the separate Python collector**, not emitted as an ISO timestamp by this C exporter. Configure `date_nanos` in OpenSearch for nanosecond precision.
+
+The exporter also emits `exporter_instance_id` and `event_sequence`. The instance ID is built from the boot identifier, process ID and daemon-instance start timestamp; it is not a stable router ID. `event_sequence` increments per successfully formatted JSON event within the daemon process, not per connection. It is not a TCP acknowledgement, durable counter or proof of lossless transport. The `connection_id` correlates lifecycle records but must not be treated as globally persistent across restarts. Correlate event sequences only within the same exporter instance and account for asynchronous delivery, filtering and restarts.
+
+The schema string remains `nlbwmon-flow-v1`; consumers should tolerate additional fields. The separate collector may derive `flow.duration_ns`, `flow.new_sequence`, `flow.destroy_sequence`, and RFC3339 `flow.started_at`/`flow.ended_at` from the lifecycle records. Consult the collector documentation for its actual storage semantics and mappings.
+
