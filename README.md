@@ -1,7 +1,7 @@
 # nlbwmon — concurrent OpenSearch connection export and Prometheus metrics
 
 
-> **RC preparation:** branch `release/v0.1.0-rc.1` adds nanosecond timestamp fields and event identity/sequence metadata. The RC is **not published**; `v0.1.0-beta.1` remains the last published release. Existing APK version `0.1.0_alpha1-r1` is **not** an RC build. See [changelog](CHANGELOG.md), [wire protocol](docs/FLOW_EXPORT.md) and [versioning](docs/VERSIONING.md).
+> **RC preparation:** branch `release/v0.1.0-rc.1` adds nanosecond timestamp fields and event identity/sequence metadata. The RC is **not published**; `v0.1.0-beta.1` remains the last published release. The RC branch now builds APK version `0.1.0_rc1-r1`; no RC binaries have been published. See [changelog](CHANGELOG.md), [wire protocol](docs/FLOW_EXPORT.md) and [versioning](docs/VERSIONING.md).
 
 **Installation:** [English](INSTALL.md) | [Русский](INSTALL.ru.md)
 
@@ -71,7 +71,7 @@ This branch adds optional, per-connection flow records to nlbwmon's existing Lin
 - The wire schema `nlbwmon-flow-v1` is independent of the Git/release version.
 - See [CHANGELOG.md](CHANGELOG.md), [docs/VERSIONING.md](docs/VERSIONING.md), [docs/limitations.md](docs/limitations.md), and [lab validation](docs/lab-validation-2026-11-13.md).
 
-For the reproducible dual-target OpenWrt APK build, fork package identity, installation precautions, and rollback test requirements, see [Building and rollback](docs/BUILD_AND_ROLLBACK.md). The alpha package version is `0.1.0_alpha1-r1` and is distinct from the official OpenWrt package version. **This is a source-only beta; no prebuilt APK is offered. Automatic rollback is not guaranteed.**
+For the reproducible dual-target OpenWrt APK build, fork package identity, installation precautions, and rollback test requirements, see [Building and rollback](docs/BUILD_AND_ROLLBACK.md). The RC candidate package version is `0.1.0_rc1-r1` and is distinct from the official OpenWrt package version. **This is a source-only beta; no prebuilt APK is offered. Automatic rollback is not guaranteed.**
 
 ## What this fork adds
 
