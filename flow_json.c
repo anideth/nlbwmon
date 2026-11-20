@@ -62,8 +62,8 @@ int flow_json_format_event(const struct flow_record *record, const char *event_t
         ",\"orig_bytes\":%" PRIu64 ",\"reply_packets\":%" PRIu64
         ",\"reply_bytes\":%" PRIu64 ",\"started_sec\":%" PRIdMAX
         ",\"finished_sec\":%" PRIdMAX ",\"started_nsec\":%ld,\"finished_nsec\":%ld,\"seen_new\":%s}\n",
-        instance_id, event_sequence + 1, router_name, event_type, boot_id, record->id, (intmax_t)record->started.tv_sec,
-        record->started.tv_nsec, record->id, record->mark, (unsigned)record->original.family,
+        instance_id, event_sequence + 1, router_name, event_type, boot_id, record->id, (intmax_t)record->identity_started.tv_sec,
+        record->identity_started.tv_nsec, record->id, record->mark, (unsigned)record->original.family,
         (unsigned)record->original.protocol, os, od,
         (unsigned)ntohs(record->original.sport), (unsigned)ntohs(record->original.dport),
         rs, rd, (unsigned)ntohs(record->reply.sport), (unsigned)ntohs(record->reply.dport),
