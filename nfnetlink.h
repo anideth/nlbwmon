@@ -20,9 +20,14 @@
 #define __NFNETLINK_H__
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #include "database.h"
 
+
+/* Shared production entry point for synthetic netlink integration tests. */
+void nfnetlink_parse_event(void *reply, int len, bool allow_insert,
+                           bool update_mac, bool from_dump);
 
 int nfnetlink_connect(int bufsize);
 int nfnetlink_dump(bool allow_insert);

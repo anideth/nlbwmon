@@ -1,0 +1,12 @@
+# Local build products and editor files
+/build-test/
+/build/
+/CMakeFiles/
+/CMakeCache.txt
+/Testing/
+*.o
+*.swp
+*.swo
+
+# Local deployment destinations and secrets
+/deploy-nlbwmon.local.conf

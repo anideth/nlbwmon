@@ -32,10 +32,13 @@
 #include "protocol.h"
 #include "subnets.h"
 #include "neigh.h"
+#include "flow_export.h"
 
 
 static uint32_t n_pending_inserts = 0;
+/* Keep multicast notifications separate from synchronous counter-zero dumps. */
 static struct nl_sock *nl = NULL;
+static struct nl_sock *dump_nl = NULL;
 static struct uloop_fd ufd = { };
 
 static struct nla_policy ct_tuple_policy[CTA_TUPLE_MAX+1] = {
@@ -61,6 +64,17 @@ static struct nla_policy ct_proto_policy[CTA_PROTO_MAX+1] = {
 	[CTA_PROTO_ICMPV6_TYPE] = { .type = NLA_U8 },
 	[CTA_PROTO_ICMPV6_CODE] = { .type = NLA_U8 },
 };
+
+static struct nla_policy ct_timestamp_policy[CTA_TIMESTAMP_MAX+1] = {
+	[CTA_TIMESTAMP_START] = { .type = NLA_U64 },
+	[CTA_TIMESTAMP_STOP]  = { .type = NLA_U64 },
+};
+
+static void flow_timestamp_from_ns(struct timespec *dst, uint64_t ns)
+{
+	dst->tv_sec = (time_t)(ns / 1000000000ULL);
+	dst->tv_nsec = (long)(ns % 1000000000ULL);
+}
 
 static struct nla_policy ct_counters_policy[CTA_COUNTERS_MAX+1] = {
 	[CTA_COUNTERS_PACKETS]  = { .type = NLA_U64 },
@@ -135,11 +149,13 @@ parse_addrs(struct nlattr **tuple, uint8_t *family, void *saddr, void *daddr)
 {
 	struct nlattr *addrs[CTA_IP_MAX + 1];
 
-	if (nla_parse_nested(addrs, CTA_IP_MAX, tuple[CTA_TUPLE_IP], ct_ip_policy))
+	if (!tuple[CTA_TUPLE_IP] ||
+	    nla_parse_nested(addrs, CTA_IP_MAX, tuple[CTA_TUPLE_IP], ct_ip_policy))
 		return false;
 
 	if (addrs[CTA_IP_V4_SRC] && addrs[CTA_IP_V4_DST]) {
 		*family = AF_INET;
+		/* Keep the legacy host-order representation expected by subnets.c. */
 		((struct in_addr *)saddr)->s_addr = htobe32(nla_get_u32(addrs[CTA_IP_V4_SRC]));
 		((struct in_addr *)daddr)->s_addr = htobe32(nla_get_u32(addrs[CTA_IP_V4_DST]));
 		return true;
@@ -162,7 +178,8 @@ parse_proto_port(struct nlattr **tuple, bool src, uint8_t *proto, uint16_t *port
 	*proto = 0;
 	*port = 0;
 
-	if (nla_parse_nested(tb, CTA_PROTO_MAX, tuple[CTA_TUPLE_PROTO], ct_proto_policy))
+	if (!tuple[CTA_TUPLE_PROTO] ||
+	    nla_parse_nested(tb, CTA_PROTO_MAX, tuple[CTA_TUPLE_PROTO], ct_proto_policy))
 		return false;
 
 	if (tb[CTA_PROTO_NUM]) {
@@ -177,8 +194,93 @@ parse_proto_port(struct nlattr **tuple, bool src, uint8_t *proto, uint16_t *port
 	return false;
 }
 
+/*
+ * The counter-zero dump contains deltas; NEW is only a lifecycle marker.
+ * DESTROY carries the final residual counters. Keep this accounting separate
+ * from the existing nlbwmon database path.
+ */
 static void
-parse_event(void *reply, int len, bool allow_insert, bool update_mac)
+track_flow(struct nlattr **attr, bool from_dump, unsigned int msg_type,
+           uint8_t family, uint8_t orig_proto, uint8_t reply_proto,
+           const struct in6_addr *orig_src, const struct in6_addr *orig_dst,
+           const struct in6_addr *reply_src, const struct in6_addr *reply_dst,
+           uint16_t orig_sport, uint16_t orig_dport,
+           uint16_t reply_sport, uint16_t reply_dport,
+           uint64_t orig_pkts, uint64_t orig_bytes,
+           uint64_t reply_pkts, uint64_t reply_bytes)
+{
+	struct flow_record flow = { };
+	enum flow_event_type event;
+
+	if (!attr[CTA_ID] || nla_len(attr[CTA_ID]) != sizeof(uint32_t))
+		return;
+
+	if (attr[CTA_MARK] && nla_len(attr[CTA_MARK]) != sizeof(uint32_t))
+		return;
+
+	/* A DELETE notification can arrive while a counter-zero dump is read.
+	 * Never treat it as a counter delta: complete the flow instead. */
+	if (msg_type == IPCTNL_MSG_CT_DELETE)
+		event = FLOW_DESTROY;
+	else if (from_dump)
+		event = FLOW_UPDATE;
+	else if (msg_type == IPCTNL_MSG_CT_NEW)
+		event = FLOW_NEW;
+	else
+		return;
+
+	/* Conntrack CTA_ID and CTA_MARK are network-byte-order attributes. */
+	flow.id = ntohl(nla_get_u32(attr[CTA_ID]));
+	flow.mark = attr[CTA_MARK] ? ntohl(nla_get_u32(attr[CTA_MARK])) : 0;
+	flow.original.family = family;
+	flow.original.protocol = orig_proto;
+	flow.original.src = *orig_src;
+	flow.original.dst = *orig_dst;
+	flow.original.sport = orig_sport;
+	flow.original.dport = orig_dport;
+	flow.reply.family = family;
+	flow.reply.protocol = reply_proto;
+	flow.reply.src = *reply_src;
+	flow.reply.dst = *reply_dst;
+	flow.reply.sport = reply_sport;
+	flow.reply.dport = reply_dport;
+
+	/* The legacy database uses byte-swapped IPv4 addresses for subnet matching.
+	 * Convert only the flow-export copies back to network byte order so that
+	 * inet_ntop() emits correct addresses; leave database accounting untouched. */
+	if (family == AF_INET) {
+		flow.original.src.s6_addr32[0] = htobe32(flow.original.src.s6_addr32[0]);
+		flow.original.dst.s6_addr32[0] = htobe32(flow.original.dst.s6_addr32[0]);
+		flow.reply.src.s6_addr32[0] = htobe32(flow.reply.src.s6_addr32[0]);
+		flow.reply.dst.s6_addr32[0] = htobe32(flow.reply.dst.s6_addr32[0]);
+	}
+
+	/* Kernel conntrack counters are encoded in network byte order. */
+	flow.orig_packets = be64toh(orig_pkts);
+	flow.orig_bytes = be64toh(orig_bytes);
+	flow.reply_packets = be64toh(reply_pkts);
+	flow.reply_bytes = be64toh(reply_bytes);
+
+	/* Kernel conntrack timestamps are nanoseconds since the Unix epoch,
+	 * encoded as network-order u64. Fall back to CLOCK_REALTIME in
+	 * flow_process() if timestamp accounting is disabled or unavailable. */
+	if (attr[CTA_TIMESTAMP]) {
+		struct nlattr *ts[CTA_TIMESTAMP_MAX + 1];
+		if (!nla_parse_nested(ts, CTA_TIMESTAMP_MAX, attr[CTA_TIMESTAMP],
+		                      ct_timestamp_policy)) {
+			if (ts[CTA_TIMESTAMP_START])
+				flow_timestamp_from_ns(&flow.started, be64toh(nla_get_u64(ts[CTA_TIMESTAMP_START])));
+			if (ts[CTA_TIMESTAMP_STOP])
+				flow_timestamp_from_ns(&flow.finished, be64toh(nla_get_u64(ts[CTA_TIMESTAMP_STOP])));
+		}
+	}
+
+	flow_process(event, &flow);
+}
+
+void
+nfnetlink_parse_event(void *reply, int len, bool allow_insert, bool update_mac,
+                      bool from_dump)
 {
 	int err;
 	struct nlmsghdr *hdr;
@@ -191,7 +293,8 @@ parse_event(void *reply, int len, bool allow_insert, bool update_mac)
 	struct in6_addr orig_saddr, orig_daddr, reply_saddr, reply_daddr;
 
 	uint64_t orig_pkts, orig_bytes, reply_pkts, reply_bytes;
-	uint16_t orig_port, reply_port;
+	uint16_t orig_port, reply_port, orig_sport, reply_dport;
+	uint8_t ignored_proto;
 	uint8_t orig_proto, reply_proto;
 
 	for (hdr = reply; nlmsg_ok(hdr, len); hdr = nlmsg_next(hdr, &len)) {
@@ -226,17 +329,40 @@ parse_event(void *reply, int len, bool allow_insert, bool update_mac)
 		    !parse_proto_port(tuple, true, &reply_proto, &reply_port))
 			continue;
 
+		/* Retrieve the two ports not needed by the legacy database. */
+		if (!nla_parse_nested(tuple, CTA_TUPLE_MAX,
+		                      attr[CTA_TUPLE_ORIG], ct_tuple_policy))
+			parse_proto_port(tuple, true, &ignored_proto, &orig_sport);
+		else
+			orig_sport = 0;
+
+		if (!nla_parse_nested(tuple, CTA_TUPLE_MAX,
+		                      attr[CTA_TUPLE_REPLY], ct_tuple_policy))
+			parse_proto_port(tuple, false, &ignored_proto, &reply_dport);
+		else
+			reply_dport = 0;
+
 		if (attr[CTA_COUNTERS_ORIG] &&
 		    !nla_parse_nested(counters, CTA_COUNTERS_MAX, attr[CTA_COUNTERS_ORIG], ct_counters_policy)) {
-			orig_pkts = nla_get_u64(counters[CTA_COUNTERS_PACKETS]);
-			orig_bytes = nla_get_u64(counters[CTA_COUNTERS_BYTES]);
+			if (counters[CTA_COUNTERS_PACKETS])
+				orig_pkts = nla_get_u64(counters[CTA_COUNTERS_PACKETS]);
+			if (counters[CTA_COUNTERS_BYTES])
+				orig_bytes = nla_get_u64(counters[CTA_COUNTERS_BYTES]);
 		}
 
 		if (attr[CTA_COUNTERS_REPLY] &&
 		    !nla_parse_nested(counters, CTA_COUNTERS_MAX, attr[CTA_COUNTERS_REPLY], ct_counters_policy)) {
-			reply_pkts = nla_get_u64(counters[CTA_COUNTERS_PACKETS]);
-			reply_bytes = nla_get_u64(counters[CTA_COUNTERS_BYTES]);
+			if (counters[CTA_COUNTERS_PACKETS])
+				reply_pkts = nla_get_u64(counters[CTA_COUNTERS_PACKETS]);
+			if (counters[CTA_COUNTERS_BYTES])
+				reply_bytes = nla_get_u64(counters[CTA_COUNTERS_BYTES]);
 		}
+
+		track_flow(attr, from_dump, NFNL_MSG_TYPE(hdr->nlmsg_type),
+		           r.family, orig_proto, reply_proto,
+		           &orig_saddr, &orig_daddr, &reply_saddr, &reply_daddr,
+		           orig_sport, orig_port, reply_port, reply_dport,
+		           orig_pkts, orig_bytes, reply_pkts, reply_bytes);
 
 		/* local -> remote */
 		if (!match_subnet(r.family, &orig_saddr) && match_subnet(r.family, &orig_daddr)) {
@@ -303,7 +429,7 @@ handle_event(struct uloop_fd *fd, unsigned int ev)
 
 		hdr = (struct nlmsghdr *)msg;
 		is_new = (NFNL_MSG_TYPE(hdr->nlmsg_type) == IPCTNL_MSG_CT_NEW);
-		parse_event(msg, len, is_new, is_new);
+		nfnetlink_parse_event(msg, len, is_new, is_new, false);
 		free(msg);
 	}
 }
@@ -313,7 +439,7 @@ handle_dump(struct nl_msg *msg, void *arg)
 {
 	struct nlmsghdr *hdr = nlmsg_hdr(msg);
 	bool *allow_insert = arg;
-	parse_event(hdr, hdr->nlmsg_len, *allow_insert, true);
+	nfnetlink_parse_event(hdr, hdr->nlmsg_len, *allow_insert, true, true);
 	return NL_SKIP;
 }
 
@@ -339,12 +465,6 @@ handle_ack(struct nl_msg *msg, void *arg)
 	int *ret = arg;
 	*ret = 0;
 	return NL_STOP;
-}
-
-static int
-handle_seq(struct nl_msg *msg, void *arg)
-{
-	return NL_OK;
 }
 
 static void
@@ -387,15 +507,29 @@ nfnetlink_connect(int bufsize)
 	                                  NFNLGRP_CONNTRACK_DESTROY, 0))
 		return -errno;
 
+	/* No multicast subscriptions on the dump socket: replies cannot
+	 * consume NEW/DESTROY notifications intended for the event socket. */
+	dump_nl = nl_socket_alloc();
+	if (!dump_nl)
+		return -ENOMEM;
+	if (nl_connect(dump_nl, NETLINK_NETFILTER))
+		return -errno;
+
 	check_rmem_max(bufsize);
 
 	if (nl_socket_set_buffer_size(nl, bufsize, 0))
+		return -errno;
+	if (nl_socket_set_buffer_size(dump_nl, bufsize, 0))
 		return -errno;
 
 	ufd.cb = handle_event;
 	ufd.fd = nl_socket_get_fd(nl);
 
-	if (uloop_fd_add(&ufd, ULOOP_READ))
+	/* Netlink reports receive overruns as EPOLLERR. Without ERROR_CB,
+	 * uloop silently unregisters the socket and NEW/DESTROY reception
+	 * never resumes. Keep it registered so handle_event() can drain it
+	 * (including on error-only wakeups) after a transient overrun. */
+	if (uloop_fd_add(&ufd, ULOOP_READ | ULOOP_ERROR_CB))
 		return -errno;
 
 	return 0;
@@ -487,14 +621,13 @@ nfnetlink_dump(bool allow_insert)
 	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM, handle_dump, &allow_insert);
 	nl_cb_set(cb, NL_CB_FINISH, NL_CB_CUSTOM, handle_finish, &err);
 	nl_cb_set(cb, NL_CB_ACK, NL_CB_CUSTOM, handle_ack, &err);
-	nl_cb_set(cb, NL_CB_SEQ_CHECK, NL_CB_CUSTOM, handle_seq, NULL);
 	nl_cb_err(cb, NL_CB_CUSTOM, handle_error, &err);
 
-	if (nl_send_auto_complete(nl, req) < 0)
+	if (nl_send_auto_complete(dump_nl, req) < 0)
 		goto err;
 
 	for (err = 1; err > 0; ) {
-		ret = nl_recvmsgs(nl, cb);
+		ret = nl_recvmsgs(dump_nl, cb);
 
 		if (ret < 0) {
 			fprintf(stderr, "Netlink receive failure: %s\n", nl_geterror(ret));

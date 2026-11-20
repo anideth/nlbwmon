@@ -1,0 +1,6 @@
+# Copy this file to deploy-nlbwmon.local.conf and set your own hosts.
+# Do not commit deploy-nlbwmon.local.conf.
+LAB_HOST='root@lab-router.example.invalid'
+FILOGIC_HOST='root@filogic-router.example.invalid'
+# Optionally override these defaults:
+# BACKUP_ROOT="$HOME/nlbwmon-deploy-backups"
