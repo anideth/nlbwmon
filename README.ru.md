@@ -1,5 +1,8 @@
 # nlbwmon — одновременный экспорт соединений в OpenSearch и метрик Prometheus
 
+
+> **Подготовка RC:** ветка `release/v0.1.0-rc.1` содержит изменения формата временных меток (наносекунды) и идентификаторов событий. RC ещё не опубликован; последний опубликованный релиз — `v0.1.0-beta.1`. Текущая версия APK `0.1.0_alpha1-r1` не означает RC. Подробности: [CHANGELOG](CHANGELOG.md), [протокол](docs/FLOW_EXPORT.md), [версии](docs/VERSIONING.md).
+
 **Установка:** [INSTALL на русском](INSTALL.ru.md) | [English](INSTALL.md)
 
 [English](README.md) | **Русский**
