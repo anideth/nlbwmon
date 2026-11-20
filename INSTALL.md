@@ -1,7 +1,7 @@
 # Installation — experimental nlbwmon fork
 
 
-> **RC preparation:** branch `release/v0.1.0-rc.1` adds nanosecond timestamp fields and event identity/sequence metadata. The RC is **not published**; `v0.1.0-beta.1` remains the last published release. Existing APK version `0.1.0_alpha1-r1` is **not** an RC build. See [changelog](CHANGELOG.md), [wire protocol](docs/FLOW_EXPORT.md) and [versioning](docs/VERSIONING.md).
+> **RC preparation:** branch `release/v0.1.0-rc.1` adds nanosecond timestamp fields and event identity/sequence metadata. The RC is **not published**; `v0.1.0-beta.1` remains the last published release. The RC branch now builds APK version `0.1.0_rc1-r1`; no RC binaries have been published. See [changelog](CHANGELOG.md), [wire protocol](docs/FLOW_EXPORT.md) and [versioning](docs/VERSIONING.md).
 
 **English** | [Русский](INSTALL.ru.md)
 
@@ -33,7 +33,7 @@ bash build-nlbwmon.sh --target filogic
 
 Run only the command for the desired target. The script stages the source, adjusts the SDK recipe, includes the fork's **matching UCI config and init script**, and writes the APK, SHA256 and build provenance under `~/projects/openwrt-packages/25.12.6/<target>/`. Building does **not** install anything on the router.
 
-The fork package version is `0.1.0_alpha1-r1`, distinct from the upstream package version. Check the resulting APK's **architecture, package metadata and SHA256**, not only its filename. Full prerequisites and caveats: [build and rollback](docs/BUILD_AND_ROLLBACK.md).
+The RC candidate package version is `0.1.0_rc1-r1`, distinct from the upstream package version. Check the resulting APK's **architecture, package metadata and SHA256**, not only its filename. Full prerequisites and caveats: [build and rollback](docs/BUILD_AND_ROLLBACK.md).
 
 ## 3. Install on the lab router first
 
@@ -44,7 +44,7 @@ cp deploy-nlbwmon.conf.example deploy-nlbwmon.local.conf && vim deploy-nlbwmon.l
 bash deploy-nlbwmon.sh
 ```
 
-Choose the correct platform and **Check only** first. The script also offers **Deploy alpha** and **Roll back to official repository package**. It checks release/architecture, creates a local backup, and verifies the transferred APK checksum. It **does not automatically roll back** after failure. Do not assume it can restore a consistent live database.
+Choose the correct platform and **Check only** first. The script also offers **Deploy experimental package** and **Roll back to official repository package**. It checks release/architecture, creates a local backup, and verifies the transferred APK checksum. It **does not automatically roll back** after failure. Do not assume it can restore a consistent live database.
 
 After installation, verify the package, the running service, and unchanged accounting:
 
