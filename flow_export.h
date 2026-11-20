@@ -29,6 +29,8 @@ struct flow_record {
     uint64_t reply_bytes;
 
     struct timespec started;
+    /* Stable identity timestamp captured on first observation. */
+    struct timespec identity_started;
     struct timespec finished;
 
     bool seen_new;
