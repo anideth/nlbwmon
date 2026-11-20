@@ -3,6 +3,19 @@
 > [!CAUTION]
 > Experimental fork. Not production-ready; flow events can be lost, duplicated, or incomplete. Do not use for billing, compliance, or security auditing.
 
+
+## v0.1.0-rc.1 — release candidate (in preparation; NOT published)
+
+### Changed
+- Export conntrack kernel timestamps with nanosecond fractions as `started_sec`/`started_nsec` and `finished_sec`/`finished_nsec`; the receiving collector can derive `date_nanos` and duration fields.
+- Include `exporter_instance_id` (daemon-instance identifier) and monotonic per-process `event_sequence` for correlating and diagnosing lifecycle events. Neither guarantees delivery or detects all losses.
+- Keep the wire schema identifier `nlbwmon-flow-v1` unchanged; validate consumers against the additional fields.
+- Allow reproducible builds from the RC release branch; the existing OpenWrt APK version remains `0.1.0_alpha1-r1` until a separately verified versioned rebuild.
+
+### Observed validation and remaining gates
+- An OpenWrt 25.12.6 mediatek/filogic build was installed and the standard `nlbw -c csv` accounting path remained functional. Lifecycle records with nanosecond precision reached the companion collector/OpenSearch pipeline.
+- Before publishing: repeat tests and SDK builds from the final tagged commit; verify packaging/version metadata, rollback, and sustained operation. Prior TCP queue-drop logs do not establish current loss rates. Delivery is best-effort and not suitable for billing or auditing.
+
 ## v0.1.0-beta.1 — source-only beta (published 2026-11-18)
 
 - No prebuilt APKs are provided. Build for the exact OpenWrt release, target and package architecture using the matching SDK.
