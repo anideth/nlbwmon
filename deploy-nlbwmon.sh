@@ -49,7 +49,7 @@ choose_host() {
   valid_host || { printf 'Invalid SSH destination\n'; return 1; }
 }
 choose_mode() {
-  printf '\nOperation:\n  1) Check only (read-only)\n  2) Deploy alpha\n  3) Roll back to official repository package\n  0) Cancel\n'
+  printf '\nOperation:\n  1) Check only (read-only)\n  2) Deploy custom package\n  3) Roll back to official repository package\n  0) Cancel\n'
   local n; read -r -p 'Selection: ' n
   case "$n" in 1) MODE=check ;; 2) MODE=deploy ;; 3) MODE=rollback ;; 0) exit 0 ;; *) return 1 ;; esac
 }
@@ -59,7 +59,7 @@ while :; do
   choose_mode || continue
   APK="$BASE/$APK_DIR/$PACKAGE"
   printf '\n========== REVIEW ==========\n'
-  printf 'Operation:       %s\nPlatform:        %s\nSSH destination: %s\nOpenWrt version: %s\nOpenWrt target:  %s\nPackage arch:    %s\nCustom APK:      %s\nBackup root:     %s\n' "$MODE" "$TARGET" "$HOST" "$VERSION" "$RELEASE_TARGET" "$RELEASE_ARCH" "$APK" "$BACKUP_ROOT"
+  printf 'Operation:       %s\nPlatform:        %s\nSSH destination: %s\nOpenWrt version: %s\nOpenWrt target:  %s\nPackage arch:    %s\nPackage version: %s\nCustom APK:      %s\nBackup root:     %s\n' "$MODE" "$TARGET" "$HOST" "$VERSION" "$RELEASE_TARGET" "$RELEASE_ARCH" "${FORK_VERSION}-r${FORK_RELEASE}" "$APK" "$BACKUP_ROOT"
   printf '============================\n  1) Continue\n  2) Choose again\n  0) Cancel\n'
   read -r -p 'Selection: ' answer
   case "$answer" in 1) break ;; 2) continue ;; 0) exit 0 ;; esac
