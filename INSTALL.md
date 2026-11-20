@@ -1,5 +1,8 @@
 # Installation — experimental nlbwmon fork
 
+
+> **RC preparation:** branch `release/v0.1.0-rc.1` adds nanosecond timestamp fields and event identity/sequence metadata. The RC is **not published**; `v0.1.0-beta.1` remains the last published release. Existing APK version `0.1.0_alpha1-r1` is **not** an RC build. See [changelog](CHANGELOG.md), [wire protocol](docs/FLOW_EXPORT.md) and [versioning](docs/VERSIONING.md).
+
 **English** | [Русский](INSTALL.ru.md)
 
 > [!CAUTION]
@@ -21,7 +24,7 @@ Back up `/etc/config/nlbwmon`, the accounting database, and package information.
 
 ## 2. Build the APK
 
-On a Linux x86-64 build host, install the **matching OpenWrt 25.12.6 SDK** (not ImageBuilder) for the target, with the `packages` feed and `CONFIG_PACKAGE_nlbwmon=m`. The supplied builder expects the extracted SDK under `~/projects/openwrt-sdk/`, and a clean committed checkout on `feature/flow-lifecycle-events`. Review the script before running it.
+On a Linux x86-64 build host, install the **matching OpenWrt 25.12.6 SDK** (not ImageBuilder) for the target, with the `packages` feed and `CONFIG_PACKAGE_nlbwmon=m`. The supplied builder expects the extracted SDK under `~/projects/openwrt-sdk/`, and a clean committed checkout on `feature/beta2-timestamps-sequence` or `release/v0.1.0-rc.1`. Review the script before running it.
 
 ```sh
 bash build-nlbwmon.sh --target x86-64
